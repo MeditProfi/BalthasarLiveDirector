@@ -1,0 +1,530 @@
+#
+# This file is part of VIDI Playout BalthasarLive Director.
+#
+# VIDI Playout BalthasarLive Director is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# VIDI Playout BalthasarLive Director is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# VIDI Playout BalthasarLive Director. If not, see <http://www.gnu.org/licenses/>.
+#
+#=====================================================init==================================================================
+Part: CONST
+{
+	SET SrcInput1 	= 2-100
+	SET SrcInput2 	= 2-101
+	SET SrcBorder 	= 2-110
+	SET SrcDummy 	= 2-111
+	SET SrcLoading	= 2-112
+	
+	SET MixBkg 		= 1-1
+	SET MixInput1	= 1-3
+	SET MixBorder1	= 1-4
+	SET MixInput2	= 1-6
+	SET MixBorder2	= 1-7
+	SET MixTransit	= 1-50
+	SET MixEnter	= 1-49
+	
+	SET PrvBkg		= 2-1
+	SET PrvDummy1	= 2-2
+	SET PrvLoading1 = 2-3
+	SET PrvInput1	= 2-4
+	SET PrvBorder1	= 2-5
+	SET PrvDummy2	= 2-6
+	SET PrvLoading2 = 2-7
+	SET PrvInput2	= 2-8
+	SET PrvBorder2	= 2-9	
+	SET PrvCommon	= 2-19
+	
+	SET TransitInTout		= 600
+	SET TransitOutTout		= 600
+	SET EnterInTout			= 700
+	SET EnterOutTout		= 1500
+}
+
+Part: INIT
+{	
+#common init
+	invoke common setTemplate $0
+	invoke common addInput 1
+	invoke common addInput 2
+	invoke common setTotalActions 5
+	invoke data setInitialMode $2
+	invoke data setNeedDelay 1
+
+#init source layers
+	invoke common DISABLE SrcInput1
+	invoke common DISABLE SrcInput2
+	invoke common DISABLE SrcBorder
+	invoke common DISABLE SrcDummy
+	invoke common DISABLE SrcLoading
+	play SrcBorder border
+	play SrcDummy dummy
+	play SrcLoading loading loop
+	
+	loadbg MixBkg bkg_loop loop
+	loadbg MixEnter bkg_enter
+	loadbg MixTransit transit	
+	
+#prepare mixed output
+	mixer MixBkg 		opacity 0
+	mixer MixInput1 	opacity 0
+	mixer MixBorder1 	opacity 0
+	mixer MixInput2 	opacity 0
+	mixer MixBorder2 	opacity 0	
+
+	play MixInput1 route://SrcInput1
+	play MixBorder1 route://SrcBorder
+	play MixInput2 route://SrcInput2
+	play MixBorder2 route://SrcBorder
+	
+	mixer MixBkg volume 0
+	mixer MixInput1 volume 0
+	mixer MixInput2 volume 0
+	#mixer MixTransit volume 0
+	#mixer MixEnter volume 0
+
+#prepare preview output
+	invoke $0 StartSeparatePreview
+
+#init default mode
+	invoke $0 CTL$2 0
+	invoke $0 SETINP1
+}
+
+Part: StartSeparatePreview
+{
+	clear PrvCommon
+
+	if ( GetData(baltasar\\keyStyle) == closed ) mixer PrvBkg opacity 1 else mixer PrvBkg opacity 0
+	load PrvBkg bkg_loop 
+	mixer PrvBkg fill 0 0 0.8 0.8
+	
+	play PrvDummy1 route://SrcDummy
+	play PrvInput1 route://SrcInput1
+	play PrvBorder1 route://SrcBorder
+	
+	play PrvDummy2 route://SrcDummy
+	play PrvInput2 route://SrcInput2
+	play PrvBorder2 route://SrcBorder
+}
+
+Part: StopSeparatePreview
+{
+	clear PrvBkg
+
+	clear PrvDummy1
+	clear PrvLoading1
+	clear PrvInput1
+	clear PrvBorder1
+	
+	clear PrvDummy2
+	clear PrvLoading2
+	clear PrvInput2
+	clear PrvBorder2
+	
+	mixer PrvCommon fill 0 0 0.8 0.8
+	play PrvCommon route://1
+}
+
+#=====================================================controls==================================================================
+#same sizes of windows
+Part: CTL1 
+{
+	invoke common setAction 1
+	
+	if ($2 == 1) invoke $0 TRANSIT_BEGIN else
+	
+	invoke data SetKeyStyle "closed"
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
+	mixer PrvBkg opacity 1
+
+	invoke data SetInputGeometry 1 "0.0625 0.2111 0.3300 0.3245"
+	invoke data SetInputVisible 1 "1"
+	mixer MixInput1  fill 0.0781 0.2639 0.4120 0.4056
+	mixer MixBorder1 fill 0.0755 0.2599 0.4172 0.4136
+
+	mixer PrvDummy1   fill 0.0625 0.2111 0.3300 0.3245
+	mixer PrvLoading1 fill 0.0625 0.2111 0.3300 0.3245
+	mixer PrvInput1   fill 0.0625 0.2111 0.3300 0.3245
+	mixer PrvBorder1  fill 0.0604 0.2079 0.3338 0.3309
+	invoke common setInputTagPos 1 0.0625 0.2111 
+
+
+
+	invoke data SetInputGeometry 2 "0.4066 0.2111 0.3300 0.3245"
+	invoke data SetInputVisible 2 "1"
+	mixer MixInput2  fill 0.5083 0.2639 0.4120 0.4056
+	mixer MixBorder2 fill 0.5057 0.2599 0.4172 0.4136
+
+	mixer PrvDummy2   fill 0.4066 0.2111 0.3300 0.3245
+	mixer PrvLoading2 fill 0.4066 0.2111 0.3300 0.3245
+	mixer PrvInput2   fill 0.4066 0.2111 0.3300 0.3245
+	mixer PrvBorder2  fill 0.4046 0.2079 0.3338 0.3309
+	invoke common setInputTagPos 2 0.4066 0.2111 
+	
+	if ($2 == 1) invoke $0 TRANSIT_END else
+}
+
+#one small windows over transparent background
+Part: CTL2
+{
+	invoke common setAction 2
+
+	if ($2 == 1) invoke $0 TRANSIT_BEGIN else
+
+	invoke data SetKeyStyle "open"
+	# if ( GetData(baltasar\\onAir) == taken ) invoke $0 MixOn else
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 0 else
+	mixer PrvBkg opacity 0
+
+	invoke data SetInputGeometry 1 "0 0 0 0"
+	invoke data SetInputVisible 1 "0"
+	mixer MixInput1  fill 0 0 0 0
+	mixer MixBorder1 fill 0 0 0 0
+
+	mixer PrvDummy1   fill 0 0 0 0
+	mixer PrvLoading1 fill 0 0 0 0
+	mixer PrvInput1   fill 0 0 0 0
+	mixer PrvBorder1  fill 0 0 0 0
+	invoke common setInputTagPos 1 -1 -1
+
+
+	invoke data SetInputGeometry 2 "0.5071 0.4911 0.2304 0.2274"
+	invoke data SetInputVisible 2 "1"
+	mixer MixInput2  fill 0.6339 0.6139 0.2880 0.2843
+	mixer MixBorder2 fill 0.6313 0.6099 0.2932 0.2923
+
+	mixer PrvDummy2   fill 0.5071 0.4911 0.2304 0.2274
+	mixer PrvLoading2 fill 0.5071 0.4911 0.2304 0.2274
+	mixer PrvInput2   fill 0.5071 0.4911 0.2304 0.2274
+	mixer PrvBorder2  fill 0.5050 0.4879 0.2346 0.2338
+	invoke common setInputTagPos 2 0.5050 0.4879
+
+	if ($2 == 1) invoke $0 TRANSIT_END else
+}
+
+#fullscreen left
+Part: CTL3
+{
+	invoke common setAction 3
+	
+	if ($2 == 1) invoke $0 TRANSIT_BEGIN else
+	
+	invoke data SetKeyStyle "closed"
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
+	mixer PrvBkg opacity 1
+	
+	invoke data SetInputGeometry 1 "0 0 0.8 0.8"
+	invoke data SetInputVisible 1 "1"
+	mixer MixInput1  fill 0 0 1 1
+	mixer MixBorder1 fill 0 0 0 0
+	
+	mixer PrvDummy1   fill 0 0 0.8 0.8
+	mixer PrvLoading1 fill 0 0 0.8 0.8
+	mixer PrvInput1   fill 0 0 0.8 0.8
+	mixer PrvBorder1  fill 0 0 0 0
+	invoke common setInputTagPos 1 -1 -1
+	
+	
+	invoke data SetInputGeometry 2 "0 0 0 0"
+	invoke data SetInputVisible 2 "0"
+	mixer MixInput2  fill 0 0 0 0
+	mixer MixBorder2 fill 0 0 0 0
+
+	mixer PrvDummy2   fill 0 0 0 0
+	mixer PrvLoading2 fill 0 0 0 0
+	mixer PrvInput2   fill 0 0 0 0	
+	mixer PrvBorder2  fill 0 0 0 0
+	invoke common setInputTagPos 2 -1 -1
+	
+	if ($2 == 1) invoke $0 TRANSIT_END else
+}
+
+#fullscreen right
+Part: CTL4
+{
+	invoke common setAction 4
+
+	if ($2 == 1) invoke $0 TRANSIT_BEGIN else
+
+	invoke data SetKeyStyle "closed"
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
+	mixer PrvBkg opacity 1
+
+	invoke data SetInputGeometry 1 "0 0 0 0"
+	invoke data SetInputVisible 1 "0"
+	mixer MixInput1  fill 0 0 0 0
+	mixer MixBorder1 fill 0 0 0 0
+
+	mixer PrvDummy1   fill 0 0 0 0
+	mixer PrvLoading1 fill 0 0 0 0
+	mixer PrvInput1   fill 0 0 0 0
+	mixer PrvBorder1  fill 0 0 0 0
+	invoke common setInputTagPos 1 -1 -1
+
+
+	invoke data SetInputGeometry 2 "0 0 0.8 0.8"
+	invoke data SetInputVisible 2 "1"
+	mixer MixInput2  fill 0 0 1 1
+	mixer MixBorder2 fill 0 0 0 0
+
+	mixer PrvDummy2   fill 0 0 0.8 0.8
+	mixer PrvLoading2 fill 0 0 0.8 0.8
+	mixer PrvInput2   fill 0 0 0.8 0.8	
+	mixer PrvBorder2  fill 0 0 0 0
+	invoke common setInputTagPos 2 -1 -1
+
+	if ($2 == 1) invoke $0 TRANSIT_END else
+}
+
+#open key
+Part: CTL5
+{
+	invoke common setAction 5
+
+	if ($2 == 1) invoke $0 TRANSIT_BEGIN else
+
+	invoke data SetKeyStyle "open"
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 0 else
+	mixer PrvBkg opacity 0
+
+	invoke data SetInputGeometry 1 "0 0 0 0"
+	invoke data SetInputVisible 1 "0"
+	mixer MixInput1  fill 0 0 0 0
+	mixer MixBorder1 fill 0 0 0 0
+
+	mixer PrvDummy1   fill 0 0 0 0
+	mixer PrvLoading1 fill 0 0 0 0
+	mixer PrvInput1   fill 0 0 0 0
+	mixer PrvBorder1  fill 0 0 0 0
+	invoke common setInputTagPos 1 -1 -1
+
+
+	invoke data SetInputGeometry 2 "0 0 0 0"
+	invoke data SetInputVisible 2 "0"
+	mixer MixInput2  fill 0 0 0 0
+	mixer MixBorder2 fill 0 0 0 0
+
+	mixer PrvDummy2   fill 0 0 0 0
+	mixer PrvLoading2 fill 0 0 0 0
+	mixer PrvInput2   fill 0 0 0 0
+	mixer PrvBorder2  fill 0 0 0 0
+	invoke common setInputTagPos 2 -1 -1
+
+	if ($2 == 1) invoke $0 TRANSIT_END else
+}
+
+Part: INPUT1
+{
+	play SrcInput1 $2 delay $3 USE_PRESETS
+	play PrvLoading1 route://SrcLoading
+	invoke data SetInput 1 "$2" "$4" "$5"
+	invoke $0 SETINP2
+}
+
+Part: INPUT2
+{
+	play SrcInput2 $2 delay $3 USE_PRESETS
+	play PrvLoading2 route://SrcLoading
+	invoke data SetInput 2 "$2" "$4" "$5"
+}
+
+Part: STOP1
+{
+	stop SrcInput1
+	stop PrvLoading1
+	invoke data SetInput 1 "none" "none" "none"
+}
+
+Part: STOP2
+{
+	stop SrcInput2
+	stop PrvLoading2
+	invoke data SetInput 2 "none" "none" "none"
+}
+
+Part: SETINP1
+{
+	invoke common setActiveInput 1 
+}
+
+Part: SETINP2
+{
+	invoke common setActiveInput 2 
+}
+
+#=====================================================TAKES/CUES/UNTAKES/etc...==================================================================
+
+Part: TAKE_STANDALONE
+{
+	if ( GetData(baltasar\\onAir) == taken ) else invoke $0 DO_TAKE_STANDALONE
+}
+
+Part: DO_TAKE_STANDALONE
+{
+	invoke common TAKE
+	invoke $0 StopSeparatePreview
+	
+	play MixEnter
+	loadbg MixEnter bkg_enter
+		wait EnterInTout
+			play MixBkg 
+			loadbg MixBkg bkg_loop loop
+			invoke $0 MixOn
+		wait EnterOutTout
+	stop MixEnter
+}
+
+Part: CUE_STANDALONE
+{
+	invoke common CUE	
+	invoke $0 UNTAKE_STANDALONE
+}
+
+Part: UNTAKE_STANDALONE
+{
+	if ( GetData(baltasar\\onAir) == taken ) invoke $0 DO_UNTAKE_STANDALONE else 
+}
+
+Part: DO_UNTAKE_STANDALONE
+{
+	play MixEnter
+	loadbg MixEnter bkg_enter
+		wait EnterInTout	
+			invoke $0 MixOff
+			invoke $0 StopBkg
+			invoke $0 StartSeparatePreview
+		wait EnterOutTout
+	stop MixEnter
+}
+
+Part: SWITCH_AS_UPPER
+{
+	if ( GetData(baltasar\\onAir) == taken ) invoke $0 UNTAKE_TRANSIT else invoke $0 TAKE_TRANSIT 
+}
+
+Part: SWITCH_AS_LOWER
+{
+	if ( GetData(baltasar\\onAir) == taken ) invoke $0 UNTAKE_CUT else invoke $0 TAKE_CUT   
+}
+
+Part: TAKE_TRANSIT
+{
+	invoke common TAKE
+	invoke $0 StopSeparatePreview
+	invoke $0 StartBkgNoEnter
+	
+	play MixTransit
+	loadbg MixTransit transit
+		wait TransitInTout
+			invoke $0 MixOn
+		wait TransitOutTout
+	stop MixTransit	
+}
+
+Part: UNTAKE_TRANSIT
+{
+	invoke common CUE
+	
+	play MixTransit
+	loadbg MixTransit transit
+		wait TransitInTout
+			invoke $0 MixOff
+		wait TransitOutTout
+	stop MixTransit	
+   
+
+	invoke $0 StopBkg
+	invoke $0 StartSeparatePreview
+}
+
+Part: DoPlayTransit
+{
+	play MixTransit
+	loadbg MixTransit transit 
+}
+
+Part: TRANSIT_BEGIN
+{
+	if (GetData(baltasar\\onAir) == taken) invoke $0 DoPlayTransit else
+	if (GetData(baltasar\\onAir) == taken) wait TransitInTout else
+}
+
+Part: TRANSIT_END
+{
+	if (GetData(baltasar\\onAir) == taken) wait TransitOutTout else
+	if (GetData(baltasar\\onAir) == taken) stop MixTransit else	 
+}
+
+Part: TAKE_CUT
+{
+	invoke common TAKE
+	invoke $0 StopSeparatePreview
+	invoke $0 StartBkgNoEnter
+	invoke $0 MixOn
+}
+
+Part: UNTAKE_CUT
+{
+	invoke common CUE
+	invoke $0 MixOff
+	invoke $0 StopBkg
+	invoke $0 StartSeparatePreview
+}
+
+
+
+#=====================================================helpers==================================================================
+Part: MixOn
+{	
+    if ( GetData(baltasar\\keyStyle) == closed ) mixer MixBkg opacity 1 else mixer MixBkg opacity 0
+	mixer MixInput1 opacity 1 
+	mixer MixBorder1 opacity 1 
+	mixer MixInput2 opacity 1 
+	mixer MixBorder2 opacity 1  	
+}
+
+Part: MixOff
+{	
+    mixer MixBkg opacity 0
+	mixer MixInput1 opacity 0 
+	mixer MixBorder1 opacity 0
+	mixer MixInput2 opacity 0 
+	mixer MixBorder2 opacity 0
+}
+
+Part: StartBkgNoEnter
+{
+	play MixBkg 
+	loadbg MixBkg bkg_loop loop
+}
+
+Part: StopBkg
+{
+	stop MixBkg
+}
+
+#=====================================================exit==================================================================
+Part: CLEAN
+{
+	invoke common UNCUE
+	invoke common UNTAKE
+	
+	invoke $0 UNTAKE_STANDALONE
+	invoke $0 STOP1
+	invoke $0 STOP2
+	invoke $0 CTLGetData(baltasar\\initialMode)
+}
+
+Part: EXIT
+{
+	invoke $0 UNTAKE_STANDALONE
+	invoke choose init
+}

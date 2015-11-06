@@ -1,0 +1,15 @@
+/var/log/btlctl/*.log {
+        daily
+        missingok
+        rotate 52
+        compress
+        delaycompress
+        notifempty
+        create 644 nginx nginx
+        sharedscripts
+        postrotate
+                [ -f /usr/local/btlctl/balthasar1.pid ]      && kill -USR1 `cat /usr/local/btlctl/balthasar1.pid`
+                [ -f /usr/local/btlctl/balthasar3.pid ]      && kill -USR1 `cat /usr/local/btlctl/balthasar3.pid`
+                [ -f /usr/local/btlctl/balthasar_fill1.pid ] && kill -USR1 `cat /usr/local/btlctl/balthasar_fill1.pid`
+        endscript
+}

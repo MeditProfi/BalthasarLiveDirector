@@ -1,0 +1,75 @@
+#
+# This file is part of VIDI Playout BalthasarLive Director.
+#
+# VIDI Playout BalthasarLive Director is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# VIDI Playout BalthasarLive Director is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# VIDI Playout BalthasarLive Director. If not, see <http://www.gnu.org/licenses/>.
+#
+Part: INIT
+{
+#common init
+	invoke common setTemplate $0
+	invoke common addInput 1
+	invoke common addInput 2
+	invoke common addInput 3
+	invoke common setTotalActions 0	
+}
+
+Part: INPUT1
+{
+	play 1-1 $2 USE_PRESETS
+	invoke data SetInput 1 "$2" "$4" "$5"
+}
+
+Part: INPUT2
+{
+	play 2-1 $2 USE_PRESETS
+	invoke data SetInput 2 "$2" "$4" "$5"
+}
+
+Part: INPUT3
+{
+	play 3-1 $2 USE_PRESETS
+	invoke data SetInput 3 "$2" "$4" "$5"
+}
+
+Part: STOP1
+{
+	stop 1-1
+	invoke data SetInput 1 "none" "none" "none"
+}
+
+Part: STOP2
+{
+	stop 2-1
+	invoke data SetInput 2 "none" "none" "none"
+}
+
+Part: STOP3
+{
+	stop 3-1
+	invoke data SetInput 3 "none" "none" "none"
+}
+
+Part: CLEAN
+{
+	#invoke $0 STOP1
+	#invoke $0 STOP2
+	#invoke $0 STOP3
+	
+	invoke $0 EXIT
+}
+
+Part: EXIT
+{
+	invoke choose init
+}

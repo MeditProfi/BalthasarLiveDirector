@@ -1,0 +1,36 @@
+.down_box
+{
+	position:absolute;
+	top: 80%;
+	left: 0;
+	width: 80%;
+	height: 20%;
+}
+
+.right_box
+{
+	position:absolute;
+	top: 0;
+	left: 80%;
+	width: 20%;
+	height: 80%;
+}
+
+.corner_box
+{
+	position:absolute;
+	top: 80%;
+	left: 80%;
+	width: 80%;
+	height: 20%;
+}
+
+.content_box
+{
+	position:absolute;
+	top: 0;
+	left: 0;
+	width: 80%;
+	height: 80%;
+	background-color: #00FF00;
+}

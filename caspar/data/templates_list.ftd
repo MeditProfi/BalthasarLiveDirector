@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<templates>
+	<template>
+		<id>1</id>
+		<name>one_dve_bkg</name>
+		<desc>1: Окно БЗ - студия</desc>
+		<actions><action id="2"/><action id="4"/><action id="5"/></actions>
+	</template>
+	<template>
+		<id>2</id>
+		<name>one_dve_bkg</name>
+		<desc>2: Окно БЗ - студия</desc>
+		<actions><action id="2"/><action id="4"/><action id="5"/></actions>
+	</template>
+	<template>
+		<id>3</id>
+		<name>two_dve_same_size_sdi</name>
+		<desc>3: Окна - прямое</desc>
+		<actions><action id="1"/><action id="2"/><action id="3"/><action id="4"/><action id="5"/></actions>
+	</template>
+	<template>
+		<id>4</id>
+		<name>two_dve_sdi</name>
+		<desc>4: Окна - прямое</desc>
+		<actions><action id="1"/><action id="2"/><action id="3"/><action id="4"/><action id="5"/></actions>
+	</template>
+	<template>
+		<id>5</id>
+		<name>two_dve_same_size</name>
+		<desc>5: Окна - студия</desc>
+		<actions><action id="1"/><action id="2"/><action id="3"/><action id="4"/><action id="5"/></actions>
+	</template>
+	<template>
+		<id>6</id>
+		<name>two_dve_bkg</name>
+		<desc>6: Окна - студия</desc>
+		<actions><action id="1"/><action id="2"/><action id="3"/><action id="4"/><action id="5"/></actions>
+	</template>
+</templates>

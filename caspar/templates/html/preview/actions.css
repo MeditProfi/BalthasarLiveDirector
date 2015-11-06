@@ -1,0 +1,91 @@
+.down_action
+{
+	margin-top: 20px;
+	margin-right: 13px;
+	margin-left: 13px;
+	margin-bottom: 40px;
+	width: 220px;
+	height: 170px;
+	font: 50px tahoma;
+	border-radius: 10px;
+	text-align:center;
+	float:left;
+	background-color: #aaa;	
+}
+
+.down_action_wide
+{
+	margin-top: 20px;
+	margin-right: 13px;
+	margin-left: 13px;
+	margin-bottom: 40px;
+	width: 240px;
+	height: 170px;
+	font: 50px tahoma;
+	border-radius: 10px;
+	text-align:center;
+	float:left;
+	background-color: #aaa;	
+}
+
+.corner_action
+{
+	margin-top: 20px;
+	margin-right: 13px;
+	margin-left: 33px;
+	margin-bottom: 40px;
+	width: 310px;
+	height: 170px;
+	font: 50px tahoma;
+	border-radius: 10px;
+	text-align:center;
+	float:left;
+	background-color: #aaa;	
+}
+
+.right_action
+{
+	margin-top: 50px;
+	margin-right: 13px;
+	margin-left: 33px;
+	margin-bottom: 40px;
+	width: 310px;
+	height: 170px;
+	font: 50px tahoma;
+	border-radius: 10px;
+	text-align:center;
+	background-color: #aaa;	
+}
+
+.input_tag
+{
+	position:absolute;
+	font: 40px tahoma;
+	background-color: #aaa;	
+	border: 1px solid;
+	border-radius: 5px;
+	text-align:center;
+	color: #3355ee;
+}
+
+.action_name
+{	
+	padding-top:10px;
+	padding-left:15px;
+	text-align:left;
+}
+
+.action_pict
+{
+	padding-top:15px;
+	text-align:right;
+	padding-right:15px;
+}
+
+.action_key
+{
+	font: 40px tahoma;
+	text-align:right;
+	padding-right:25px;
+	color: #3355ee;
+}

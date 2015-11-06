@@ -1,0 +1,93 @@
+#color_bar
+  float: right
+  margin-right: 15px
+
+.colorBar[disabled]
+  opacity: 0.5
+
+.colorBar
+  .colorbutton
+    width: 15px
+    height: 20px
+    display: inline-block
+    border: 2px solid transparent
+    margin: 0px
+    border-radius: 3px
+    cursor: pointer
+    .icon
+      display: inline-block
+      width: 10px
+      height: 10px
+      margin: 4px
+      border-radius: 2px
+      cursor: pointer
+
+  .colorbutton.selected
+    border: 2px solid #b9b9b9
+    background-color: #ededed      
+  .colorbutton.none
+    margin-right: 5px
+    .icon
+      width: 10px
+      height: 10px
+      background-color: white
+      border: 1px solid lightgray
+
+  .colorbutton.blue   .icon
+    background-color: #5fbff9
+  .colorbutton.cyan   .icon
+    background-color: #bee5f4
+  .colorbutton.violet .icon
+    background-color: #a7adf9
+  .colorbutton.red    .icon
+    background-color: #f876b6
+  .colorbutton.orange .icon
+    background-color: #fbbc0f
+  .colorbutton.brown  .icon
+    background-color: #cca16c
+  .colorbutton.gray   .icon
+    background-color: #c7c8cc
+
+.res_div
+  .clip_name
+    padding-left: 5px
+  .clip_name.blue 
+    background-color: #afddf9
+  .clip_name.cyan
+    background-color: #ddf0f7
+  .clip_name.violet
+    background-color: #d2d4fa
+  .clip_name.red
+    background-color: #fbbfda
+  .clip_name.orange
+    background-color: #fcd986
+  .clip_name.brown
+    background-color: #e5cdb2
+  .clip_name.gray
+    background-color: #cccccd
+
+table.tableview tr.table_res >td
+  >span
+    overflow-x: hidden
+    text-overflow: ellipsis
+    cursor: default
+
+  >span.NAME
+    display: block
+    border-radius: 5px
+    padding: 0px 5px 0px 10px
+    margin-right: 10px
+  >span.NAME.blue
+    background-color: #afddf9
+  >span.NAME.cyan
+    background-color: #ddf0f7
+  >span.NAME.violet
+    background-color: #d2d4fa
+  >span.NAME.red
+    background-color: #fbbfda
+  >span.NAME.orange
+    background-color: #fcd986
+  >span.NAME.brown
+    background-color: #e5cdb2
+  >span.NAME.gray
+    background-color: #cccccd

@@ -1,0 +1,349 @@
+#
+# This file is part of VIDI Playout BalthasarLive Director.
+#
+# VIDI Playout BalthasarLive Director is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# VIDI Playout BalthasarLive Director is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# VIDI Playout BalthasarLive Director. If not, see <http://www.gnu.org/licenses/>.
+#
+#=====================================================init==================================================================
+#
+#DO NOT USE THIS TEMPLATE AS IS! IT HAS TO BE REFACTORED ACCORDING TO TWO_DVE_BKG LOGIC!
+#
+#
+
+Part: CONST
+{
+	SET SrcInput1 	= 1-100
+	SET SrcInput2 	= 1-101
+	SET SrcInput2 	= 1-102
+	SET SrcBorder 	= 1-110
+	SET SrcDummy 	= 1-111
+	SET SrcLoading	= 1-112
+	
+	SET MixBkg 		= 1-1
+	SET MixInput1	= 1-3
+	SET MixBorder1	= 1-4
+	SET MixInput2	= 1-6
+	SET MixBorder2	= 1-7
+	SET MixInput3	= 1-9
+	SET MixBorder3	= 1-10
+	SET MixTransit	= 1-50
+	
+	SET PrvBkg		= 3-1
+	SET PrvDummy1	= 3-2
+	SET PrvLoading1 = 3-3
+	SET PrvInput1	= 3-4
+	SET PrvBorder1	= 3-5
+	SET PrvDummy2	= 3-6
+	SET PrvLoading2 = 3-7
+	SET PrvInput2	= 3-8
+	SET PrvBorder2	= 3-9	
+	SET PrvDummy3	= 3-10
+	SET PrvLoading3 = 3-11
+	SET PrvInput3	= 3-12
+	SET PrvBorder3	= 3-13		
+	
+	SET TransitInTout		= 1500
+	SET TransitOutTout		= 1500
+	SET FadeOutTout			= 2000
+	SET TakeStdFrames 		= 20
+	SET UntakeStdFrames 	= 40
+	SET BkgEnterLength		= 640
+}
+
+#DO NOT USE THIS TEMPLATE AS IS! IT HAS TO BE REFACTORED ACCORDING TO TWO_DVE_BKG LOGIC!
+#Part: INIT
+{	
+#common init
+	invoke common setTemplate $0
+	invoke common addInput 1
+	invoke common addInput 2
+	invoke common addInput 3
+	invoke common setTotalActions 1
+
+#init source layers
+	invoke common DISABLE SrcInput1
+	invoke common DISABLE SrcInput2
+	invoke common DISABLE SrcInput3
+	invoke common DISABLE SrcBorder
+	invoke common DISABLE SrcDummy
+	invoke common DISABLE SrcLoading
+	play SrcBorder border
+	play SrcDummy dummy
+	play SrcLoading loading loop
+
+	
+#prepare mixed output
+	mixer MixBkg 		opacity 0
+	mixer MixInput1 	opacity 0
+	mixer MixBorder1 	opacity 0
+	mixer MixInput2 	opacity 0
+	mixer MixBorder2 	opacity 0	
+	mixer MixInput3 	opacity 0
+	mixer MixBorder3 	opacity 0	
+	
+
+	play MixInput1 route://SrcInput1
+	play MixBorder1 route://SrcBorder
+	play MixInput2 route://SrcInput2
+	play MixBorder2 route://SrcBorder
+	play MixInput3 route://SrcInput3
+	play MixBorder3 route://SrcBorder	
+	
+	mixer MixBkg volume 0
+	mixer MixInput1 volume 0
+	mixer MixInput2 volume 0
+	mixer MixInput3 volume 0
+
+#prepare preview output
+	load PrvBkg bkg_loop 
+	mixer PrvBkg fill 0 0 0.8 0.8
+	
+	play PrvDummy1 route://SrcDummy
+	play PrvInput1 route://SrcInput1
+	play PrvBorder1 route://SrcBorder
+	
+	play PrvDummy2 route://SrcDummy
+	play PrvInput2 route://SrcInput2
+	play PrvBorder2 route://SrcBorder
+	
+	play PrvDummy3 route://SrcDummy
+	play PrvInput3 route://SrcInput3
+	play PrvBorder3 route://SrcBorder	
+		
+#prepare fill output	
+	play 2-1 route://SrcInput1
+
+
+#init default mode
+	invoke $0 CTL$2
+	invoke $0 SETINP1
+}
+
+
+
+#=====================================================controls==================================================================
+Part: CTL1
+{
+	invoke common setAction 1
+
+
+	invoke data SetInputGeometry 1 "0.0613 0.0822 0.4375 0.6334"
+	invoke common setInputTagPos 1 0.0613 0.0822
+	mixer MixInput1   fill  0.0766 0.1028 0.5469 0.7917
+	mixer MixBorder1  fill  0.0740 0.0988 0.5521 0.7997
+	mixer PrvDummy1   fill  0.0613 0.0822 0.4375 0.6334
+	mixer PrvLoading1 fill  0.0613 0.0822 0.4375 0.6334
+	mixer PrvInput1   fill  0.0613 0.0822 0.4375 0.6334
+	mixer PrvBorder1  fill  0.0592 0.0790 0.4417 0.6398
+	
+	
+	
+	invoke data SetInputGeometry 2 "0.5054 0.0822 0.2325 0.3089"
+	invoke common setInputTagPos 2 0.5054 0.0822
+	mixer MixInput2   fill  0.6318 0.1028 0.2906 0.3861
+	mixer MixBorder2  fill  0.6292 0.0988 0.2958 0.3941
+	mixer PrvDummy2   fill  0.5054 0.0822 0.2325 0.3089
+	mixer PrvLoading2 fill  0.5054 0.0822 0.2325 0.3089
+	mixer PrvInput2   fill  0.5054 0.0822 0.2325 0.3089
+	mixer PrvBorder2  fill  0.5034 0.0790 0.2366 0.3153
+
+
+
+	invoke data SetInputGeometry 3 "0.5054 0.4066 0.2325 0.3089"
+	invoke common setInputTagPos 3 0.5054 0.4066
+	mixer MixInput3   fill  0.6318 0.5083 0.2906 0.3861
+	mixer MixBorder3  fill  0.6292 0.5043 0.2958 0.3941
+	mixer PrvDummy3   fill  0.5054 0.4066 0.2325 0.3089
+	mixer PrvLoading3 fill  0.5054 0.4066 0.2325 0.3089
+	mixer PrvInput3   fill  0.5054 0.4066 0.2325 0.3089
+	mixer PrvBorder3  fill  0.5034 0.4034 0.2366 0.3153	
+}
+
+
+
+Part: INPUT1
+{
+	play SrcInput1 $2
+	play PrvLoading1 route://SrcLoading
+	invoke data SetInput 1 "$2" "$4" "$5"
+	invoke $0 SETINP2
+}
+
+Part: INPUT2
+{
+	play SrcInput2 $2
+	play PrvLoading2 route://SrcLoading
+	invoke data SetInput 2 "$2" "$4" "$5"
+	invoke $0 SETINP3
+}
+
+Part: INPUT3
+{
+	play SrcInput3 $2
+	play PrvLoading3 route://SrcLoading
+	invoke data SetInput 3 "$2" "$4" "$5"
+}
+
+Part: STOP1
+{
+	stop SrcInput1
+	stop PrvLoading1
+	invoke data SetInput 1 "none" "none" "none"
+}
+
+Part: STOP2
+{
+	stop SrcInput2
+	stop PrvLoading2
+	invoke data SetInput 2 "none" "none" "none"
+}
+
+Part: STOP3
+{
+	stop SrcInput3
+	stop PrvLoading3
+	invoke data SetInput 3 "none" "none" "none"
+}
+
+Part: SETINP1
+{
+	invoke common setActiveInput 1 
+}
+
+Part: SETINP2
+{
+	invoke common setActiveInput 2 
+}
+
+Part: SETINP3
+{
+	invoke common setActiveInput 3 
+}
+
+#=====================================================TAKES/CUES/UNTAKES/etc...==================================================================
+
+Part: TAKE_STANDALONE
+{
+	invoke common TAKE
+	invoke $0 StartBkgWithEnter
+	invoke $0 MixOn TakeStdFrames BkgEnterLength
+}
+
+Part: CUE_STANDALONE
+{
+	invoke common CUE	
+	invoke $0 MixOff UntakeStdFrames 0 
+	wait FadeOutTout
+	invoke $0 StopBkg
+}
+
+Part: TAKE_TRANSIT
+{
+	invoke common TAKE
+	invoke $0 StartBkgNoEnter
+	
+	play MixTransit transit
+		wait TransitInTout
+			invoke $0 MixOn 0 0
+		wait TransitOutTout
+	stop MixTransit	
+}
+
+Part: UNTAKE_TRANSIT
+{
+	invoke common UNTAKE
+	
+
+	play MixTransit transit
+		wait TransitInTout
+			invoke $0 MixOff 0 0
+		wait TransitOutTout
+	stop MixTransit	
+   
+
+	invoke $0 StopBkg
+}
+
+Part: TAKE_CUT
+{
+	invoke common TAKE
+	invoke $0 StartBkgNoEnter
+	invoke $0 MixOn 0 0
+}
+
+Part: UNTAKE_CUT
+{
+	invoke common UNTAKE
+	invoke $0 MixOff 0 0
+	invoke $0 StopBkg
+}
+
+
+
+#=====================================================helpers==================================================================
+Part: MixOn
+{	
+	mixer MixBkg opacity 1
+	wait $3
+	mixer MixInput1 opacity 1 $2 linear 
+	mixer MixBorder1 opacity 1 $2 linear 
+	mixer MixInput2 opacity 1 $2 linear 
+	mixer MixBorder2 opacity 1 $2 linear 	
+	mixer MixInput3 opacity 1 $2 linear 
+	mixer MixBorder3 opacity 1 $2 linear 	
+}
+
+Part: MixOff
+{	
+	mixer MixBkg opacity 0 $2 easeinquint 
+	wait $3
+	mixer MixInput1 opacity 0 $2 easeoutquint
+	mixer MixBorder1 opacity 0 $2 easeoutquint
+	mixer MixInput2 opacity 0 $2 easeoutquint
+	mixer MixBorder2 opacity 0 $2 easeoutquint	
+	mixer MixInput3 opacity 0 $2 easeoutquint
+	mixer MixBorder3 opacity 0 $2 easeoutquint	
+}
+
+
+Part: StartBkgWithEnter
+{
+	play MixBkg bkg_enter
+	loadbg MixBkg bkg_loop auto loop
+	play PrvBkg route://MixBkg
+}
+
+Part: StartBkgNoEnter
+{
+	play MixBkg bkg_loop loop
+	play PrvBkg route://MixBkg
+}
+
+Part: StopBkg
+{
+	stop MixBkg
+	load PrvBkg bkg_loop 
+}
+
+#=====================================================exit==================================================================
+Part: CLEAN
+{
+	invoke $0 EXIT
+}
+
+Part: EXIT
+{
+	invoke $0 MixOff UntakeStdFrames 0 
+	wait FadeOutTout
+	invoke choose init
+}

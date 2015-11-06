@@ -1,0 +1,52 @@
+#!/bin/bash
+# Use this as a run script with daemontools or runit
+
+## ABSOLUTE path to the spawn-fcgi binary
+SPAWNFCGI="/usr/bin/spawn-fcgi"
+
+## ABSOLUTE path to the FastCGI application (php-cgi, dispatch.fcgi, ...)
+FCGIPROGRAM="/var/www/btlctl/btlctl.fpl --logfile /var/log/btlctl/btlctl.fcgi.log --loglevel info"
+
+## bind to unix socket
+FCGISOCKET="/var/run/mod_fcgid/btlctl-fcgi.sock"
+
+# allowed environment variables separated by spaces
+ALLOWED_ENV="PATH USER"
+
+## if this script is run as root switch to the following user
+USERID=nginx
+SOCKUSERID=nginx
+#CHROOT=/home/www/
+#CHROOT=/home/www/
+#MMPHOME=/var/www/tiny
+#export MMPHOME
+#RAILS_ENV="production"
+#export RAILS_ENV
+
+
+################## no config below this line
+
+exec 2>&1
+
+if test x$FCGI_CHILDREN = x; then
+  FCGI_CHILDREN=4
+fi
+FCGIPROGRAM="/usr/bin/multiwatch -f $FCGI_CHILDREN -- $FCGIPROGRAM"
+
+ALLOWED_ENV="$ALLOWED_ENV"
+
+if test x$UID = x0; then
+  EX="$SPAWNFCGI -n -s $FCGISOCKET -u $USERID -U $SOCKUSERID -C $FCGI_CHILDREN -- $FCGIPROGRAM"
+else
+  EX="$SPAWNFCGI -n -s $FCGISOCKET -C $FCGI_CHILDREN -- $FCGIPROGRAM"
+fi
+
+# copy the allowed environment variables
+E=
+
+for i in $ALLOWED_ENV; do
+  E="$E $i=${!i}"
+done
+
+# clean environment and set up a new one
+exec env - $E $EX

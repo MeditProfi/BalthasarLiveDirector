@@ -1,0 +1,118 @@
+#!/bin/sh
+#
+#
+# btlctl.ui     This is the init script for starting up the BalthasarLIVEctl
+#               fastCGI processes
+#
+# chkconfig: - 64 36
+# description: Broadcast.me BalthasarLIVEctl UI Service
+# processname: service
+
+SERVICEROOT=/etc/service
+SERVICEMAIN=/service
+SERVICES=$SERVICEROOT/btlctl-*
+SVC=/usr/bin/svc
+SVSTAT=/usr/bin/svstat
+PRODUCT="BalthasarLIVE UI"
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+check() {
+        # Check that we're a privileged user
+        [ `id -u` = 0 ] || exit 4
+
+        # Check if starter is executable
+        [ -x $starter ] || exit 5
+}
+
+start() {
+	check
+	for S in $SERVICES;
+	do
+	    S=`basename $S`
+		echo -n "Enabling $S ... "
+	    test -L $SERVICEMAIN/$S \
+	        || ln -s $SERVICEROOT/$S $SERVICEMAIN/ \
+	        && test -L $SERVICEMAIN/$S
+		retval=$?
+		if [ $retval -eq 0 ]; then
+			echo "ok";
+		else
+			echo "failed";
+			failure
+		fi
+	done
+	for S in $SERVICES;
+	do
+	    S=`basename $S`
+		echo -n "Starting $S ... "
+		$SVC -u $SERVICEMAIN/$S
+		retval=$?
+		if [ $retval -eq 0 ]; then
+			echo "ok";
+		else
+			echo "failed";
+			failure
+		fi
+	done
+	echo
+	return $retval
+}
+
+stop() {
+	check
+	echo -n "Shutting down ${PRODUCT} (btlctl.ui)"
+
+	for S in $SERVICES;
+	do
+	    S=`basename $S`
+		echo -n "Stopping $S ... "
+	    test -L $SERVICEMAIN/$S && $SVC -dx $SERVICEMAIN/$S && unlink $SERVICEMAIN/$S
+		retval=$?
+		if [ $retval -eq 0 ]; then
+			echo "ok";
+		else
+			echo "failed";
+			failure
+		fi
+	done
+	sleep 1  # needed for SAM integration
+	return $retval
+}
+
+status() {
+	echo "Checking ${PRODUCT} status:"
+	STATUS=1
+	for S in $SERVICES; do
+		$SVSTAT $S
+		$SVSTAT $S | grep "$S: up" >/dev/null && STATUS=$(($STATUS & 1)) || STATUS=0
+		#ps ax | grep "supervise `basename $S`" | grep -v grep
+		  #awk '{print "PID="$1" "$5" "$6}'
+	done 
+	if [ $STATUS -eq 1 ]; then
+		return 0;
+	fi
+	return 1;
+}
+script_result=0
+case "$1" in
+	start)
+		start
+	;;
+	stop)
+		stop
+	;;
+	restart)
+		stop
+		start
+	;;
+	status)
+		status
+		script_result=$?
+	;;
+	*)
+		echo "Usage: $0 {start|stop|restart|status}"
+		exit 1
+	;;
+esac
+exit $script_result

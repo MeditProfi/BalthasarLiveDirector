@@ -1,0 +1,19 @@
+body
+{
+	background-color: #CCC;
+	width:1920px;	
+	height:1080px;
+	overflow:hidden;
+}
+
+.block
+{
+	color: #444;
+	border: 3px solid #707070;
+}
+
+.dummy
+{
+	color: #444;
+	border: 3px solid transparent;
+}

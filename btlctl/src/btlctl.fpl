@@ -1,0 +1,813 @@
+#! /usr/bin/perl -w
+#
+# This file is part of VIDI Playout BalthasarLive Director.
+#
+# VIDI Playout BalthasarLive Director is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# VIDI Playout BalthasarLive Director is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# VIDI Playout BalthasarLive Director. If not, see <http://www.gnu.org/licenses/>.
+#
+use strict;
+use warnings;
+use utf8;
+
+use FindBin;
+use FCGI;
+use Encode;
+
+use IO::Select;
+use IO::Handle;
+use IO::Socket;
+use Data::Dumper;
+use MIME::Base64;
+
+use lib "$FindBin::Bin/lib";
+use AMCP;
+use BtlCtl::Common qw( JSONencode JSONdecode GetUpdateFillEngineCommands );
+use BtlCtl::DB;
+use HERMES;
+use Getopt::Long;
+use Storable qw( dclone );
+use Time::HiRes qw( usleep );
+
+use IO::Socket;
+use IO::Socket::UNIX qw( SOCK_STREAM SOMAXCONN );
+use IO::Select;
+
+my $VERSION;
+my $CONFIG_FILE = $ENV{BTLCTL_CONFIG} // $FindBin::Bin."/btlctl.config.json";
+my %CONFIG = BtlCtl::Common::ReadConfig( $CONFIG_FILE );
+my $DATA_DIR = $CONFIG{'data_dir'} // "$FindBin::Bin/data";
+my $HERMES   = HERMES->new( %{$CONFIG{'hermes'}} );
+my $LOG;
+my $LOG_LEVEL;
+my $LOG_FILENAME;
+my %BTL_STATUS = ();
+my %FILL_ENGINES = ();
+my $VERBOSE = 1;
+
+BEGIN {
+    $VERSION = "0.9.5";
+    $CONFIG_FILE = $ENV{BTLCTL_CONFIG} // $FindBin::Bin."/btlctl.config.json";
+    %CONFIG = BtlCtl::Common::ReadConfig( $CONFIG_FILE );
+    $DATA_DIR = $CONFIG{'data_dir'} // "$FindBin::Bin/data";
+    $|=1;
+}
+
+GetOptions(
+    "verbose|v"       => \$VERBOSE,
+    "config|c=s"      => \$CONFIG_FILE,
+    "loglevel=s"      => \$LOG_LEVEL,
+    "logfile=s"       => \$LOG_FILENAME,
+) or usage(1);
+
+############################################################
+#print "hermes = ", $HERMES, "\n\n";
+Init();
+
+my $exit_code = Main();
+
+exit $exit_code;
+
+############################################################
+sub Init
+{
+    $LOG = BtlCtl::Common::InitLog( logfile => $LOG_FILENAME ? $LOG_FILENAME : $CONFIG{global}->{logfilename}, loglevel => $LOG_LEVEL, verbose => $VERBOSE );
+    $LOG->info("BCL1010I starting btlctl.fpl v$VERSION");
+
+    for my $server_config ( @{$CONFIG{template_engines}}, @{$CONFIG{fill_engines}} ) {
+        $LOG->info(sprintf("BCL1020I loading server config %s (%s)", $server_config->{id}, $server_config->{name}));
+        my $btl        = dclone($server_config);
+        $btl->{DB}     = BtlCtl::DB->new( DATA_DIR => $DATA_DIR, name => $btl->{id} );
+
+        connect_to_unix_domain_socket( $btl );
+
+        $BTL_STATUS{ $btl->{id} } = $btl;
+    }
+}
+
+sub Main {
+    my $res = 0;
+    eval {
+       _throwingMain();
+    };
+    if( $@ ) {
+        $LOG->error("fatal error: $@. Exit.");
+        #my $msg = $@;
+        #print http_header('text/plain', length($msg));
+        #print $msg;
+        #if ($loglevel) { close LOGFILE; }
+        $res = 1;
+    }
+    return $res;
+}
+
+sub _throwingMain {
+        $LOG->info("caspar cgi script started");
+        #$LOG->info("CONFIG = \n" . Dumper(\%CONFIG));
+
+        my $request = FCGI::Request();
+        #caspar_connect();
+        #if (!is_caspar_connected()) { printlog($LOG_ERROR, "could not connect to caspar [$caspar_ip:$caspar_port]"); }
+
+        while ($request->Accept() >= 0) {
+            my $result;
+            my %params = read_FCGI_input();
+            my $par = \%params;
+            eval {
+                $LOG->debug("Request. Params = ".JSONencode( $par ));
+            }; if( $@ ) {
+                $LOG->debug("ERROR: $@");
+            }
+            if( defined $params{cmd} ) {
+                if( $params{cmd} eq 'getStatus' ) {
+                    cmd_getStatus( \%params );
+                }
+                elsif( $params{cmd} eq 'getTemplateEngines' ) {
+                    cmd_getTemplateEngines( \%params );
+                }
+                elsif( $params{cmd} eq 'getTemplates' ) {
+                    cmd_getTemplates( \%params );
+                }
+                elsif( $params{cmd} eq 'setCTL' ) {
+                    cmd_setCTL( \%params );
+                }
+                elsif( $params{cmd} eq 'setInput' ) {
+                    cmd_setInput( \%params );
+                }
+                elsif( $params{cmd} eq 'setActiveInput' ) {
+                    cmd_setActiveInput( \%params );
+                }
+                elsif( $params{cmd} eq 'CLEAR' ) {
+                    cmd_CLEAR( \%params );
+                }
+                elsif( $params{cmd} eq 'CUE' ) {
+                    cmd_CUE( \%params );
+                }
+                elsif( $params{cmd} eq 'TAKE' ) {
+                    cmd_TAKE( \%params );
+                }
+                elsif( $params{cmd} eq 'EXIT' ) {
+                    cmd_EXIT( \%params );
+                }
+                elsif( $params{cmd} eq 'SWITCH' ) {
+                    cmd_SWITCH( \%params );
+                }
+            }
+
+            $request->Finish();
+        }
+}
+
+sub cmd_getStatus {
+    my $text = q();
+    my @keys = qw(
+         inited timestamp ONLINE
+         TEMPLATE TOTALACTIONS CURRENTINPUT ONAIR
+         INITIALMODE ACTION KEYSTYLE
+         CURRENTINPUT NEEDDELAY
+         INPUT
+    );
+    my $DATA = {};
+    for my $server_config ( @{$CONFIG{template_engines}} ) {
+        my $id   = $server_config->{id};
+        my $btl  = $BTL_STATUS{$id};
+        my $data = $btl->{DB}->GetData( @keys );
+        $data->{ONLINE} = 0 if( Time::HiRes::time() - $data->{timestamp} > $server_config->{tout} );
+        $DATA->{$id} = $data;
+    }
+    return output_JSON_data($DATA);
+}
+
+sub cmd_getTemplateEngines {
+    my $DATA = [];
+    for my $server_config ( @{$CONFIG{template_engines}} ) {
+        my $id = $server_config->{id};
+        push @$DATA, $server_config;
+    }
+    return output_JSON_data($DATA);
+}
+
+sub cmd_getTemplates {
+    my $text = q();
+    my @keys = qw(
+         inited
+         templates
+    );
+    my $DATA = {};
+    for my $server_config ( @{$CONFIG{template_engines}} ) {
+        my $id   = $server_config->{id};
+        my $btl  = $BTL_STATUS{$id};
+        my $data = $btl->{DB}->GetData( @keys );
+        $DATA->{$id} = $data;
+    }
+    return output_JSON_data($DATA);
+}
+
+sub cmd_setCTL {
+    my( $err, $id, $btl ) = _check_standart_args( @_ ); return if $err;
+    my $params = shift;
+
+    my $data = $btl->{DB}->GetData('TEMPLATE', 'ACTION', 'ONAIR', 'ONLINE');
+    my( $error, $result ) = send_command( $btl, 'DATA RETRIEVE baltasar/TEMPLATE');
+    if( $result =~ s/^20\d DATA RETRIEVE OK\r\n(\d)\r\n$/$1/ ) {
+        $data->{TEMPLATE} = $result;
+    }
+    $LOG->info(sprintf("BCL1100I set %s template %s CTL%d", $id, $data->{TEMPLATE}, $params->{action}));
+
+    my $cmd = sprintf(qq|MACRO %s CTL%d %d\r\n\r\n|, $data->{TEMPLATE}, $params->{action}, $params->{transit});
+
+    $error = send_command( $btl, $cmd, sub {
+            hermes_call_by_mapping( from => $data->{ACTION}, to => $params->{action} )
+                if( $data->{'ONAIR'} eq 'taken' && $data->{'ONLINE'} );
+        });
+    return output_JSON_data({status=>($error?'error':'ok'), ($error? (message=>$error):())});
+}
+
+sub cmd_setInput {
+    my( $err, $id, $btl ) = _check_standart_args( @_ ); return if $err;
+    my $params = shift;
+    my $data = $btl->{DB}->GetData('CURRENTINPUT', 'ACTION', 'TEMPLATE');
+
+    my( $error, $result ) = send_command( $btl, 'DATA RETRIEVE baltasar/CURRENTINPUT');
+    if( $result =~ s/^20\d DATA RETRIEVE OK\r\n(\d)\r\n$/$1/ ) {
+        $data->{CURRENTINPUT} = $result;
+    }
+
+    $LOG->info(sprintf("BCL1110I set %s template %s input %s = %s", $id, $data->{TEMPLATE}, $data->{CURRENTINPUT}, $params->{input}));
+
+    $params->{delay} //= 0;
+    $params->{shortcut} =~ s/\\/\\\\\\\\/g;
+    $params->{name}     =~ s/\\/\\\\\\\\\\\\\\\\/g;
+    my $cmd = sprintf(qq|MACRO %s INPUT%d "%s" "%s" "%s" "%s"\r\n\r\n|, $data->{TEMPLATE}, $data->{CURRENTINPUT}, $params->{input}, $params->{delay}, $params->{name}, $params->{shortcut});
+
+    $error = send_command( $btl, $cmd );
+    if( ! $error ) {
+        # update fill_engines
+        update_fill_engine(id=>$id, channel=>$data->{CURRENTINPUT}, input=>$params->{input});
+    }
+    return output_JSON_data({status=>($error?'error':'ok'), ($error? (message=>$error):())});
+}
+
+sub cmd_setActiveInput {
+    my( $err, $id, $btl ) = _check_standart_args( @_ ); return if $err;
+    my $params = shift;
+
+    my $data = $btl->{DB}->GetData('CURRENTINPUT', 'TEMPLATE');
+
+    $LOG->info(sprintf("BCL1120I set %s template %s current input = %s", $id, $data->{TEMPLATE}, $params->{input}));
+
+    my $cmd = sprintf(qq|MACRO %s SETINP%d\r\n\r\n|, $data->{TEMPLATE}, $params->{input});
+
+    my $error = send_command( $btl, $cmd );
+    return output_JSON_data({status=>($error?'error':'ok'), ($error? (message=>$error):())});
+}
+
+sub cmd_CLEAR {
+    my( $err, $id, $btl ) = _check_standart_args( @_ ); return if $err;
+    my $params = shift;
+
+    my $need_delay = 1;
+    my $group_btl = get_same_group_btl( $btl );
+    if( $group_btl ) {
+        my $status = $group_btl->{DB}->GetData('ONLINE', 'ONAIR');
+        if( $status->{ONLINE} && $status->{ONAIR} ne 'taken' ) {
+            $need_delay = 0;
+        }
+    }
+
+    my $data = $btl->{DB}->GetData('TEMPLATE', 'ONLINE', 'ONAIR');
+    $LOG->info(sprintf("BCL1130I set %s template %s CLAER", $id, $data->{TEMPLATE}));
+
+    my $cmd = sprintf(qq|MACRO %s CLEAN\r\n\r\n|, $data->{TEMPLATE}, $params->{input});
+
+    my $error = send_command( $btl, $cmd, sub {
+            hermes_call('ON_NEEDDELAY_OFF') if(!$need_delay);
+            hermes_call('ON_WINDOWS_OFF') if( $data->{ONLINE} && $data->{ONAIR} eq 'taken' );
+        });
+    if( ! $error ) {
+        # update fill_engines
+        update_fill_engine( id => $id, clear => 1 );
+    }
+    return output_JSON_data({status=>($error?'error':'ok'), ($error? (message=>$error):())});
+}
+
+sub cmd_CUE {
+    my( $err, $id, $btl ) = _check_standart_args( @_ ); return if $err;
+    my $params = shift;
+
+    my $need_delay = 1;
+    my $group_btl = get_same_group_btl( $btl );
+    if( $group_btl ) {
+        my $status = $group_btl->{DB}->GetData('ONLINE', 'ONAIR');
+        if( $status->{ONLINE} && $status->{ONAIR} ne 'taken' ) {
+            $need_delay = 0;
+        }
+    }
+
+    my $data = $btl->{DB}->GetData('TEMPLATE', 'ONLINE', 'ONAIR');
+    $LOG->info(sprintf("BCL1140I set %s template %s CUE", $id, $data->{TEMPLATE}));
+
+    my $cmd = sprintf(qq|MACRO %s CUE_STANDALONE\r\n\r\n|, $data->{TEMPLATE}, $params->{input});
+
+    my $error = send_command( $btl, $cmd, sub {
+            hermes_call('ON_NEEDDELAY_OFF') if(!$need_delay);
+            hermes_call('ON_WINDOWS_OFF') if( $data->{ONLINE} && $data->{ONAIR} eq 'taken' );
+        });
+    return output_JSON_data({status=>($error?'error':'ok'), ($error? (message=>$error):())});
+}
+
+sub cmd_TAKE {
+    my( $err, $id, $btl ) = _check_standart_args( @_ ); return if $err;
+    my $params = shift;
+
+    my $group_btl = get_same_group_btl( $btl );
+    if( $group_btl ) {
+        my $status = $group_btl->{DB}->GetData('ONLINE', 'ONAIR');
+        if( $status->{ONLINE} && $status->{ONAIR} eq 'taken' ) {
+            return cmd_SWITCH( $params, @_ );
+        }
+    }
+
+    my $data = $btl->{DB}->GetData('TEMPLATE');
+    $LOG->info(sprintf("BCL1150I set %s template %s TAKE", $id, $data->{TEMPLATE}));
+
+    my $cmd = sprintf(qq|MACRO %s TAKE_STANDALONE\r\n\r\n|, $data->{TEMPLATE}, $params->{input});
+    my $need_delay = ($btl->{DB}->GetData('NEEDDELAY')->{'NEEDDELAY'} eq "1");
+
+    my $error = send_command( $btl, $cmd, sub {
+            hermes_call('ON_NEEDDELAY_ON') if( $need_delay );
+            hermes_call('ON_WINDOWS_ON');
+        });
+    return output_JSON_data({status=>($error?'error':'ok'), ($error? (message=>$error):())});
+}
+
+sub cmd_EXIT {
+    my( $err, $id, $btl ) = _check_standart_args( @_ ); return if $err;
+    my $params = shift;
+
+    my $need_delay = 1;
+    my $group_btl = get_same_group_btl( $btl );
+    if( $group_btl ) {
+        my $status = $group_btl->{DB}->GetData('ONLINE', 'ONAIR');
+        if( $status->{ONLINE} && $status->{ONAIR} ne 'taken' ) {
+            $need_delay = 0;
+        }
+    }
+
+    my $data = $btl->{DB}->GetData('TEMPLATE', 'ONLINE', 'ONAIR');
+    $LOG->info(sprintf("BCL1160I set %s template %s EXIT", $id, $data->{TEMPLATE}));
+
+    my $cmd = sprintf(qq|MACRO %s EXIT\r\n\r\n|, $data->{TEMPLATE}, $params->{input});
+
+    my $error = send_command( $btl, $cmd, sub {
+            hermes_call('ON_NEEDDELAY_OFF') if(!$need_delay );
+            hermes_call('ON_WINDOWS_OFF') if( $data->{ONLINE} && $data->{ONAIR} eq 'taken' );
+        });
+    if( ! $error ) {
+        $btl->{DB}->SetData('TEMPLATE' => 'choose');
+        # update fill_engines
+        update_fill_engine( id => $id, clear => 1 );
+    }
+    return output_JSON_data({status=>($error?'error':'ok'), ($error? (message=>$error):())});
+}
+
+sub cmd_SWITCH {
+    my( $err, $id1, $btl1 ) = _check_standart_args( @_ ); return if $err;
+    my $params = shift;
+
+    my $btl2   = get_same_group_btl( $btl1 );
+    my $id2    = $btl2->{id};
+    my $action = get_switch_action( $id1, 'allowUndef' );
+    if( $action eq 'take_standalone_another' ) {
+        return cmd_TAKE({ %$params, id => $id2 });
+    }
+
+    my $btl1_data = $btl1->{DB}->GetData('ONAIR', 'ONLINE', 'NEEDDELAY');
+    my $btl2_data = $btl2->{DB}->GetData('ONAIR', 'ONLINE', 'NEEDDELAY');
+
+    return output_JSON_data({status=>'error', message=>'not both template engines are online'})
+        unless($btl1_data->{'ONLINE'} && $btl2_data->{'ONLINE'});
+
+    my $btlFrom    = $btl1_data->{'ONAIR'} eq 'taken' ? $btl1 : $btl2;
+    my $btlTo      = $btl2_data->{'ONAIR'} eq 'taken' ? $btl1 : $btl2;
+    my $btlTo_data = ($btl1->{id} eq $btlTo->{id})  ? $btl1_data : $btl2_data;
+
+    $LOG->info(sprintf("BCL1170D cmd_SWITCH: params = %s", JSONencode($params)));
+
+    if( $btl1_data->{'NEEDDELAY'} ne $btl2_data->{'NEEDDELAY'} ) {
+        $params->{transit} = 1;
+        $LOG->info(sprintf("BCL1175I cmd_SWITCH: forcing SWITCH through TRANSIT."
+                          ." %s.need_delay = %d; %s.need_delay = %d;",
+            $btl1->{id}, $btl1_data->{'NEEDDELAY'}, $btl2->{id}, $btl2_data->{'NEEDDELAY'}));
+    }
+
+    my $error = q();
+    if( $params->{transit} ) {
+        my $need_delay = $btlTo_data->{'NEEDDELAY'};
+        $error = cmd_SWITCH_THROUGH_TRANSIT($btlFrom, $btlTo, $need_delay);
+    }
+    else {
+        $error = cmd_SWITCH_THROUGH_CUT($btlFrom, $btlTo);
+    }
+
+    return output_JSON_data({status=>($error?'error':'ok'), ($error? (message=>$error):())});
+}
+
+sub cmd_SWITCH_THROUGH_TRANSIT {
+    my( $btlFrom, $btlTo, $need_delay ) = @_;
+
+    my $btlUpper = ($btlFrom->{z_index} > $btlTo->{z_index}) ? $btlFrom : $btlTo  ;
+    my $btlLower = ($btlFrom->{z_index} > $btlTo->{z_index}) ? $btlTo   : $btlFrom;
+
+    my $templateUpper = $btlUpper->{DB}->GetData('TEMPLATE')->{'TEMPLATE'};
+    my $cmdUpper      = sprintf(qq|MACRO %s SWITCH_AS_UPPER\r\n\r\n|, $templateUpper);
+    my $templateLower = $btlLower->{DB}->GetData('TEMPLATE')->{'TEMPLATE'};
+    my $cmdLower      = sprintf(qq|MACRO %s SWITCH_AS_LOWER\r\n\r\n|, $templateLower);
+
+    my $error;
+    my $delayTo = ($btlFrom->{z_index} > $btlTo->{z_index}) ?
+                    $CONFIG{switch_delay}{transit}{from_upper}
+                :   $CONFIG{switch_delay}{transit}{from_lower}
+                ;
+    $LOG->info(sprintf("BCL1180I Transition from %s(%s) to %s(%s). Transit style: EFFECT. delay=%d",
+            $btlFrom->{id}, ($btlFrom->{id} eq $btlUpper->{id} ? 'upper' : 'lower'),
+            $btlTo->{id},   ($btlTo->{id}   eq $btlUpper->{id} ? 'upper' : 'lower'),
+            $delayTo
+        ));
+
+    $error = send_command( $btlUpper, $cmdUpper, sub {
+        if( $need_delay ) { hermes_call('ON_NEEDDELAY_ON');  }
+        else {              hermes_call('ON_NEEDDELAY_OFF'); }
+        usleep( $delayTo * 1000 );
+        send_command( $btlLower, $cmdLower );
+    });
+}
+
+sub cmd_SWITCH_THROUGH_CUT {
+    my( $btlFrom, $btlTo ) = @_;
+    my $transitStyle = get_transit_style( $btlFrom, $btlTo );
+    $LOG->info(sprintf("BCL1200I Transition from %s to %s. Transit style: CUT (%s)", $btlFrom->{id}, $btlTo->{id}, $transitStyle));
+
+    my $templateFrom = $btlFrom->{DB}->GetData('TEMPLATE')->{'TEMPLATE'};
+    my $cmdFrom      = sprintf(qq|MACRO %s UNTAKE_CUT\r\n\r\n|, $templateFrom);
+    my $templateTo   = $btlTo->{DB}->GetData('TEMPLATE')->{'TEMPLATE'};
+    my $cmdTo        = sprintf(qq|MACRO %s TAKE_CUT\r\n\r\n|, $templateTo);
+
+    if( $transitStyle eq 'superposition_forbidden' )
+    {
+        my $delayFrom = $CONFIG{switch_delay}{cut}{$transitStyle}{untake};
+        my $delayTo   = $CONFIG{switch_delay}{cut}{$transitStyle}{take};
+
+        $LOG->info(sprintf("BCL1220I Transit CUT '%s'. Delays: from=%d; to=%d", $transitStyle, $delayFrom, $delayTo));
+
+        usleep( $delayFrom * 1000 );
+        my $error = send_command( $btlFrom, $cmdFrom, sub {
+            usleep( ($delayTo-$delayFrom) * 1000 );
+            send_command( $btlTo, $cmdTo );
+        });
+    }
+    elsif( $transitStyle eq 'empty_forbidden' )
+    {
+        my $delayFrom =  ($btlFrom->{z_index} > $btlTo->{z_index}) ?
+                            $CONFIG{switch_delay}{cut}{$transitStyle}{from_upper_untake}
+                      :     $CONFIG{switch_delay}{cut}{$transitStyle}{from_lower_untake};
+        my $delayTo   =  ($btlFrom->{z_index} > $btlTo->{z_index}) ?
+                            $CONFIG{switch_delay}{cut}{$transitStyle}{from_upper_take}
+                      :     $CONFIG{switch_delay}{cut}{$transitStyle}{from_lower_take};
+        $LOG->info(sprintf("BCL1220I Transit CUT '%s'. Delays: from=%d; to=%d", $transitStyle, $delayFrom, $delayTo));
+
+        usleep( $delayTo * 1000 );
+        my $error = send_command( $btlTo, $cmdTo, sub {
+            usleep( ($delayFrom-$delayTo) * 1000 );
+            send_command( $btlFrom, $cmdFrom );
+        });
+    }
+}
+
+
+sub _check_standart_args {
+    my $params = shift;
+    my $id = $params->{id};
+    return output_JSON_data({status => 'error', message => 'no server id specified'}) unless( $id );
+    my $btl = $BTL_STATUS{ $id };
+    return output_JSON_data({status => 'error', message => "unknown server id=$id"}) unless( $btl );
+
+    $params->{transit} //= 0;
+    $params->{transit} = $params->{transit} eq 'false' ? 0
+                       : $params->{transit} eq 'true'  ? 1
+                       :                                 0
+                       ;
+    return wantarray ? (q(), $id, $btl) : q();
+}
+
+sub output_JSON_data {
+    my $DATA = shift;
+    my $text = encode('utf-8', JSONencode( $DATA ));
+    print http_header('text/plain', length($text));
+    print $text;
+    return 1;
+}
+
+sub connect_to_unix_domain_socket {
+    my( $btl ) = @_;
+
+    my $socket_path = $btl->{socket_path} // $FindBin::Bin."/".$btl->{id}.".sock";
+    $LOG->info(sprintf("BCL1030I connecting to server %s socket %s", $btl->{id}, $socket_path));
+    my $socket = IO::Socket::UNIX->new(
+       Type => SOCK_STREAM,
+       Peer => $socket_path,
+    );
+    #   or die("Can't connect to server $socket_path: $!\n");
+
+    if( $socket ) {
+        $btl->{socket}     = $socket;
+        $btl->{socket_sel} = IO::Select->new($socket);
+        $LOG->info(sprintf("BCL1035I connected to server %s socket %s", $btl->{id}, $socket_path));
+    }
+    return $socket;
+}
+sub disconnect_unix_domain_socket {
+    my( $btl ) = @_;
+    $btl->{socket} = undef;
+    $btl->{socket_sel} = undef;
+}
+
+sub send_command {
+    my( $btl, $cmd, $onSendCallback ) = @_;
+
+    my $error = q();
+    my $result = q();
+    my $retry_count = 3;
+    while( $retry_count > 0 ) {
+        $retry_count--;
+        #$LOG->info(sprintf("BCL1030I send_command($retry_count) to server %s socket = %s", $btl->{id}, $btl->{socket}));
+        unless( $btl->{socket} ) {
+            connect_to_unix_domain_socket( $btl );
+        }
+        unless( $btl->{socket} ) {
+            $error = 'no connecion to socket';
+            next;
+        }
+        next unless( $btl->{socket_sel} );
+        my $socket = $btl->{socket};
+        while ($btl->{socket_sel}->can_read(0)) {
+            my $trash; $socket->recv($trash, 10240);
+            last unless length( $trash );
+        }
+        $LOG->info(sprintf("BCL1300I %s > CMD: %s", $btl->{id}, log_cmd($cmd)));
+        #print $socket $cmd;
+        my $size = $socket->send($cmd);
+        $LOG->debug(sprintf("BCL1310I sent %d bytes to server %s", $size, $btl->{id}));
+        #$socket->write($cmd);
+        if( $size ) {
+            $error = q();
+            last;
+        }
+        else {
+            disconnect_unix_domain_socket($btl);
+        }
+    }
+    if( !$error )
+    {
+        if( $onSendCallback ) {
+            $onSendCallback->( $btl );
+        }
+        my $timeout = $btl->{tout} * 1000000;
+        my $data;
+        while( $timeout > 0 ) {
+            if( $btl->{socket_sel}->can_read(0) ) {
+                $btl->{socket}->recv($data, 10240);
+                last unless length( $data );
+                $result .= $data;
+                last if( length($data) < 10240 );
+            }
+            else {
+                usleep(40000); $timeout -= 40000;
+            }
+        }
+        if( !$result ) {
+            $error = 'no reply from server';
+        }
+    }
+    return wantarray ? ( $error, $result ) : $error;
+}
+
+sub log_cmd {
+    my $cmd = shift;
+    $cmd =~ s/\r/\\r/g; $cmd =~ s/\n/\\n/g;
+    return $cmd;
+}
+
+sub read_FCGI_input {
+    my $input = '';
+
+    if (defined($ENV{'REQUEST_METHOD'}) ) {
+        $input = $ENV{'QUERY_STRING'};
+        $input = url_unescape($input) if( $input !~ /&/ );
+        if ($ENV{'REQUEST_METHOD'} eq 'POST') {
+            my $content;
+            read (STDIN, $content, $ENV{'CONTENT_LENGTH'});
+            $input .= "&" . $content;
+        }
+    }
+    my %params = ();
+    my @in = split(/&/, $input);
+    for my $i (0 .. $#in) {
+        eval {
+            $in[$i] =~ s/\+/ /g; # Convert plus's to spaces
+            $in[$i] = url_unescape($in[$i]); # Convert %XX from hex numbers to alphanumeric
+            my ($key, $val) = split(/=/,$in[$i],2); # Split into key and value on the first =.
+            if( defined $key ) {
+                # Associate key and value
+                $params{$key} .= "\0" if defined $params{$key}; # \0 is the multiple separator
+                $params{$key}  = q() unless defined $params{$key};
+                $params{$key} .= $val if defined $val;
+            }
+        };
+    }
+    $params{$_} = decode("utf8", $params{$_}) for( keys %params );
+    bless_fpl_input( \%params );
+
+    if( defined($ENV{'REQUEST_METHOD'}) ){
+        if ( $ENV{'REQUEST_METHOD'} eq 'GET') { $params{"method"} = "get"; }
+        elsif ($ENV{'REQUEST_METHOD'} eq 'POST') { $params{"method"} = "post"; }
+    }
+
+    return %params;
+}
+
+sub bless_fpl_input {
+    my ( $in ) = @_;
+    for my $k ( keys %$in ) {
+        next unless ( $k =~ /^([^\[\]]+)\[([^\[\]]+)\].*$/ );
+        my( $k1, $k2 ) = ( $1, $2 );
+        $in->{$k1} //= {};
+        my $kk = substr( $k, length($k1) );
+        if( $kk =~ /^\[[^\[\]]+\]\[([^\[\]]+)\]$/ ) {
+            my $k3 = $1;
+            $in->{$k1}{$k2} //= {};
+            $in->{$k1}{$k2}{$k3} = $in->{$k};
+            delete $in->{$k};
+        }
+        else {
+            $in->{$k1}{$k2} = $in->{$k};
+            delete $in->{$k};
+        }
+    }
+}
+
+sub http_header {
+    my( $type, $length ) = @_;
+    return sprintf(
+            qq|Cache-Control: no-cache\n|
+           .qq|Content-Type: %s; charset="utf-8"\n|
+           .(defined $length ? qq|Content-length: %d\n\n|
+             :                 qq|\n|
+            ),
+            $type, $length
+    );
+}
+
+sub url_unescape
+{
+    my $str = shift;
+    eval {
+        $str =~ s/%([0-9A-Fa-f]{2})/pack("C",hex($1))/eg if defined $str;
+    }; if( $@ ) {
+        $LOG->error("ERROR: $@");
+    }
+    return $str;
+}
+
+sub update_fill_engine {
+    my %args = @_;
+
+    my $commands = GetUpdateFillEngineCommands(\%CONFIG, \%BTL_STATUS, %args);
+    my $fill_btl      = $BTL_STATUS{ $CONFIG{fill_engines}->[0]->{id} };
+    for my $cmd ( @$commands ) {
+        my $error = send_command( $fill_btl, $cmd );
+        $LOG->error(sprintf("BCL1450E %s ERROR: %s", $fill_btl->{id}, $error)) if( $error );
+    }
+}
+
+sub get_same_group_btl {
+    my( $btl ) = @_;
+    my $group_btl = undef;
+    $btl->{group} //= 0;
+    for my $server ( @{$CONFIG{template_engines}} ) {
+        $server->{group} //= 0;
+        next if( $btl->{id} eq $server->{id} );
+        next unless( $btl->{group} eq $server->{group} );
+        $group_btl = $BTL_STATUS{ $server->{id} };
+        last;
+    }
+    return $group_btl;
+}
+
+###############################################################################
+sub get_switch_action {
+    my( $id1, $allowTakeUndefined ) = @_;
+    my $btl1 = $BTL_STATUS{ $id1 };
+    my $btl2 = get_same_group_btl( $btl1 );
+    my $id2 = $btl2->{id};
+
+    my $data1 = $btl1->{DB}->GetData('ONAIR');
+    my $data2 = $btl2->{DB}->GetData('ONAIR');
+
+    my $states = q();
+    $states .= state_to_letter($data1->{ONAIR}, $allowTakeUndefined);
+    $states .= state_to_letter($data2->{ONAIR}, $allowTakeUndefined);
+    return get_action_by_btl_states($states);
+}
+
+# state_to_letter( air_state, undefinedAsCued )
+sub state_to_letter {
+    my( $air_state, $undefinedAsCued ) = @_;
+    return ($air_state eq "taken"    ) ? 't'
+          :($air_state eq "cued"     ) ? 'c'
+          :($air_state eq "undefined") ?
+            $undefinedAsCued            ? 'c'
+            :                             'u'
+          :                              'u';
+}
+
+sub get_action_by_btl_states {
+    #1st letter: current server state; 2nd letter - another server state
+    if($_[0] =~ /uu/ ) { return "nothing";                }
+    if($_[0] =~ /uc/ ) { return "take_standalone_another";}
+    if($_[0] =~ /ut/ ) { return "nothing";                }
+    if($_[0] =~ /cu/ ) { return "nothing";                }
+    if($_[0] =~ /cc/ ) { return "take_standalone_another";}
+    if($_[0] =~ /ct/ ) { return "switch";                 }
+    if($_[0] =~ /tu/ ) { return "nothing";                }
+    if($_[0] =~ /tc/ ) { return "switch";                 }
+    if($_[0] =~ /tt/ ) { return "nothing";                }
+    return "nothing";
+}
+###############################################################################
+sub get_transit_style {
+    my( $btl1, $btl2 ) = @_;
+    my $keystyle1 = $btl1->{DB}->GetData('KEYSTYLE')->{'KEYSTYLE'};
+    my $keystyle2 = $btl2->{DB}->GetData('KEYSTYLE')->{'KEYSTYLE'};
+    my $keyStyles = _keystyle_to_letter($btl1->{DB}->GetData('KEYSTYLE')->{'KEYSTYLE'})
+                  . _keystyle_to_letter($btl2->{DB}->GetData('KEYSTYLE')->{'KEYSTYLE'});
+    return get_transit_style_from_keystyles( $keyStyles );
+}
+
+sub _keystyle_to_letter {
+    return ( $_[0] eq 'closed' ) ? 'c'
+          :( $_[0] eq 'open'   ) ? 'o'
+          :                     'u';
+}
+
+sub get_transit_style_from_keystyles {
+    #1st letter: from; 2nd letter - to
+    if($_[0] =~ /oo/ ) { return "superposition_forbidden"; }
+    if($_[0] =~ /oc/ ) { return "superposition_forbidden"; }
+    if($_[0] =~ /co/ ) { return "superposition_forbidden"; }
+    if($_[0] =~ /cc/ ) { return "empty_forbidden";         }
+    return "empty_forbidden";
+}
+###############################################################################
+
+sub hermes_call {
+    my( $cmd ) = @_;
+
+    $LOG->info(sprintf("BCL1500I HERMES call '%s'", $cmd));
+    my $result = $HERMES->CMD( $cmd );
+    $LOG->info(sprintf("BCL1505I HERMES call '%s' result: ", $cmd, $result));
+
+    return $result;
+}
+
+sub hermes_call_by_mapping {
+    my( %args ) = @_;
+    my( $from, $to ) = ( $args{from}, $args{to} );
+    my $rules = $CONFIG{hermes}{rules};
+    $LOG->info("BCL1508D hermes_call_by_mapping $from -> $to");
+
+    my @cmds = ();
+    for my $r ( @{$CONFIG{hermes}->{rules}} ) {
+        next unless( grep { $from eq $_ } @{$r->{from}} );
+        next unless( grep { $to   eq $_ } @{$r->{to}}   );
+        push @cmds, $r->{do};
+    }
+    my $result;
+    for( @cmds ) {
+        $LOG->info(sprintf("BCL1510I HERMES call '%s'", $_));
+        $result = $HERMES->CMD( $_ );
+        $LOG->info(sprintf("BCL1515I HERMES call '%s' result: ", $_, $result));
+    }
+    return $result;
+}
+
+

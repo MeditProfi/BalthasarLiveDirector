@@ -1,0 +1,154 @@
+#
+# This file is part of VIDI Playout BalthasarLive Director.
+#
+# VIDI Playout BalthasarLive Director is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# VIDI Playout BalthasarLive Director is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# VIDI Playout BalthasarLive Director. If not, see <http://www.gnu.org/licenses/>.
+#
+Part: CONST
+{
+	SET PrvHTML = 2-99 
+	SET MixText = 1-20 
+	SET PrvText = 2-50 
+}
+
+Part: cleanup
+{
+	clear 1
+	mixer 1 clear
+	clear 2
+	mixer 2 clear
+	clear 3
+	mixer 3 clear
+	
+	invoke data SetEmpty 
+}
+
+Part: setTemplate
+{
+	invoke common cleanup
+	invoke data SetTemplate $2
+	invoke common playPreviewHtml $2
+	invoke common playTextHtml
+	invoke data SetCurrentInput 1
+	invoke data setOnAir undefined
+}
+
+Part: playTextHtml
+{
+	#mixer MixText chroma green 0.0 1.0
+	#play MixText html\\text\\text
+	
+	#play PrvText route://MixText
+	#mixer PrvText chroma green 0.0 1.0
+	#mixer PrvText fill 0 0 0.8 0.8
+} 
+
+Part: playPreviewHtml
+{
+	mixer PrvHTML chroma green 0.0 1.0
+	play PrvHTML html\\preview\\$2\\$2
+} 
+
+
+Part: addInput
+{
+	invoke data SetInput $2 "none" "none" "none"
+	invoke data SetInputGeometry $2 "undefined"
+	invoke data SetInputVisible $2 "0"
+}
+
+Part: addText 
+{	
+	#call MixText addText('$2', 0, 0, 0, 0, '$2')
+	#invoke data SetTextGeometry "$2" "undefined"
+	#invoke data SetTextVisible "$2" "true"
+	#invoke data SetTextValue "$2" "$2" 
+	#invoke data SetTextMaxLength "$2" $3
+}
+
+Part: moveText
+{
+	#call MixText "moveText('$2', $3, $4, $5, $6)"
+}
+
+Part: setInputTagPos
+{
+	call PrvHTML "setInputTagPos('INP$2', $3, $4)"
+}
+
+Part: setActiveInput
+{
+	invoke data SetCurrentInput $2
+	call PrvHTML "setActiveInput('INP$2')"
+}
+
+Part: setAction
+{
+	invoke data SetAction $2
+	call PrvHTML "setActiveKey('CTL$2')"
+}
+
+Part: setTotalActions
+{
+	invoke data SetTotalActions $2
+}
+
+Part: CUE
+{
+	invoke common UNTAKE
+	call PrvHTML "setCue('on')"
+	invoke data setOnAir cued
+}
+
+Part: UNCUE
+{
+	call PrvHTML "setCue('none')"
+	invoke data setOnAir undefined
+}
+
+Part: TAKE
+{
+	invoke common UNCUE
+	call PrvHTML "setTake('on')"
+	invoke data setOnAir taken
+}
+
+Part: UNTAKE
+{
+	call PrvHTML "setTake('none')"
+	invoke data setOnAir undefined
+}
+
+Part: SHOWTEXT
+{
+	#call MixText "showText('$2')"
+	#invoke data SetTextVisible $2 true
+}
+
+Part: HIDETEXT
+{
+	#call MixText "hideText('$2')"
+	#invoke data SetTextVisible $2 false
+}
+
+Part: SETTEXT
+{
+	#call MixText "setText('$2', '$3')"
+	#invoke data SetTextValue "$2" "$3"
+}
+
+Part: DISABLE
+{
+	mixer $2 fill 0 0 0 0
+	mixer $2 volume 0
+}

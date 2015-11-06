@@ -1,0 +1,6 @@
+Revision history for Perl extension VIDI::Flock.
+
+0.01  Wed Feb  8 00:51:49 2006
+	- original version; created by h2xs 1.23 with options
+		-n VIDI::Flock
+

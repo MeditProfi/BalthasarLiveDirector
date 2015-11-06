@@ -1,0 +1,294 @@
+#
+# This file is part of VIDI Playout BalthasarLive Director.
+#
+# VIDI Playout BalthasarLive Director is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# VIDI Playout BalthasarLive Director is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# VIDI Playout BalthasarLive Director. If not, see <http://www.gnu.org/licenses/>.
+#
+#=====================================================init==================================================================
+Part: CONST
+{
+	SET SrcInput1 		= 2-100
+	SET SrcDummy 		= 2-111
+	SET SrcLoading		= 2-112
+	
+	SET MixInputBlured	= 1-2
+	SET MixInputActual	= 1-4	
+	SET MixEnter		= 1-49
+	SET MixTransit		= 1-50
+	
+	SET PrvDummyBlured 	= 2-1
+	SET PrvInputBlured	= 2-2
+	SET PrvDummyActual 	= 2-3
+	SET PrvLoading	 	= 2-4
+	SET PrvInputActual	= 2-5
+	SET PrvCommon		= 2-19
+	
+	SET TransitInTout		= 1200
+	SET TransitOutTout		= 1200
+	SET EnterInTout			= 700
+	SET EnterOutTout		= 1500
+}
+
+Part: INIT
+{	
+#common init
+	invoke common setTemplate $0
+	invoke common addInput 1	
+	invoke common setTotalActions 2
+	invoke data setInitialMode $2
+
+#init source layers
+	invoke common DISABLE SrcInput1
+	invoke common DISABLE SrcDummy
+	invoke common DISABLE SrcLoading
+	play SrcLoading loading loop
+	play SrcDummy dummy
+	
+#prepare mixed output
+	mixer MixInputBlured 	opacity 0
+	mixer MixInputActual	opacity 0
+
+	play MixInputBlured route://SrcInput1
+	play MixInputActual route://SrcInput1
+	mixer MixInputBlured saturation 0
+	
+	mixer MixInputBlured volume 0
+	mixer MixInputActual volume 0
+	
+#prepare preview output
+	invoke $0 StartSeparatePreview
+		
+		
+#init default mode
+	invoke $0 CTL$2
+}
+
+Part: StartSeparatePreview
+{
+	clear PrvCommon
+	
+	play PrvDummyActual route://SrcDummy
+	play PrvDummyBlured route://SrcDummy
+	
+	play PrvInputBlured route://SrcInput1
+	play PrvInputActual route://SrcInput1
+	
+	mixer PrvDummyBlured saturation 0
+	mixer PrvInputBlured saturation 0
+}
+
+Part: StopSeparatePreview
+{
+	clear PrvDummyActual
+	clear PrvDummyBlured
+	clear PrvLoading
+	clear PrvInputBlured
+	clear PrvInputActual
+	
+	mixer PrvCommon fill 0 0 0.8 0.8
+	play PrvCommon route://1
+}
+
+Part: SetGeometryMain
+{
+	mixer MixInputActual fill $2 $3 $4 $5 
+	mixer MixInputBlured fill $6 $7 $8 $9 
+}
+
+Part: SetGeometryPreview
+{
+	mixer PrvInputActual fill $2 $3 $4 $5 
+	mixer PrvDummyActual fill $2 $3 $4 $5 
+	
+	mixer PrvInputBlured fill $6 $7 $8 $9
+	mixer PrvDummyBlured fill $6 $7 $8 $9
+	
+	mixer PrvLoading fill $2 $3 $4 $5
+}
+
+#=====================================================controls==================================================================
+#horizontal
+Part: CTL1
+{
+	invoke common setAction 1
+
+	invoke data SetInputGeometry 1 "0.176 0.176 0.448 0.448"
+	invoke $0 SetGeometryMain     0.22 0.22 0.56 0.56         -0.74 -0.74 2.24 2.24
+	invoke $0 SetGeometryPreview  0.176 0.176 0.448 0.448     -0.592 -0.592 1.792 1.792
+	
+	play SrcDummy dummy
+}
+
+#vertical
+Part: CTL2
+{
+	invoke common setAction 2
+
+	invoke data SetInputGeometry 1 "0.28 0.00 0.24 0.80"
+	invoke $0 SetGeometryMain 0.35 0.00 0.30 1.00       -0.10 -1.50 1.20 4.00
+	invoke $0 SetGeometryPreview 0.28 0.00 0.24 0.80    -0.08 -1.20 0.96 3.20
+	
+	play SrcDummy dummy_vert
+}
+
+Part: INPUT1
+{
+	play SrcInput1 $2 USE_PRESETS
+	play PrvLoading route://SrcLoading
+	invoke data SetInput 1 "$2" "$4" "$5"
+}
+
+Part: STOP1
+{
+	stop SrcInput1
+	stop PrvLoading
+	invoke data SetInput 1 "none" "none" "none"
+}
+
+
+
+#=====================================================TAKES/CUES/UNTAKES/etc...==================================================================
+
+Part: TAKE_STANDALONE
+{
+	if ( GetData(baltasar\\onAir) == taken ) else invoke $0 DO_TAKE_STANDALONE
+}
+
+Part: DO_TAKE_STANDALONE
+{
+	invoke common TAKE
+	invoke $0 StopSeparatePreview
+	
+	play MixEnter bkg_enter
+		wait EnterInTout
+			invoke $0 MixOn
+		wait EnterOutTout
+	stop MixEnter
+}
+
+Part: CUE_STANDALONE
+{
+	invoke common CUE	
+	invoke $0 UNTAKE_STANDALONE
+}
+
+Part: UNTAKE_STANDALONE
+{
+	if ( GetData(baltasar\\onAir) == taken ) invoke $0 DO_UNTAKE_STANDALONE else 
+}
+
+Part: DO_UNTAKE_STANDALONE
+{
+	play MixEnter bkg_enter
+		wait EnterInTout	
+			invoke $0 MixOff
+			invoke $0 StartSeparatePreview
+		wait EnterOutTout
+	stop MixEnter
+}
+
+Part: SWITCH_AS_UPPER
+{
+	if ( GetData(baltasar\\onAir) == taken ) invoke $0 UNTAKE_TRANSIT else  invoke $0 TAKE_TRANSIT 
+}
+
+Part: SWITCH_AS_LOWER
+{
+	if ( GetData(baltasar\\onAir) == taken ) invoke $0 UNTAKE_CUT else invoke $0 TAKE_CUT   
+}
+
+Part: TAKE_TRANSIT
+{
+	invoke common TAKE
+	invoke $0 StopSeparatePreview
+	
+	play MixTransit transit
+		wait TransitInTout
+			invoke $0 MixOn
+		wait TransitOutTout
+	stop MixTransit	
+}
+
+Part: UNTAKE_TRANSIT
+{
+	invoke common CUE
+	
+	play MixTransit transit
+		wait TransitInTout
+			invoke $0 MixOff
+		wait TransitOutTout
+	stop MixTransit	
+   
+
+	invoke $0 StartSeparatePreview
+}
+
+Part: TRANSIT_BEGIN
+{
+	if (GetData(baltasar\\onAir) == taken) play MixTransit transit else
+	if (GetData(baltasar\\onAir) == taken) wait TransitInTout else
+}
+
+Part: TRANSIT_END
+{
+	if (GetData(baltasar\\onAir) == taken) wait TransitOutTout else
+	if (GetData(baltasar\\onAir) == taken) stop MixTransit else	 
+}
+
+Part: TAKE_CUT
+{
+	invoke common TAKE
+	invoke $0 StopSeparatePreview
+	invoke $0 MixOn
+}
+
+Part: UNTAKE_CUT
+{
+	invoke common CUE
+	invoke $0 MixOff
+	invoke $0 StartSeparatePreview
+}
+
+
+
+#=====================================================helpers==================================================================
+Part: MixOn
+{	
+	mixer MixInputBlured opacity 1
+	mixer MixInputActual opacity 1 	
+}
+
+Part: MixOff
+{	
+	mixer MixInputBlured opacity 0 
+	mixer MixInputActual opacity 0 
+}
+
+
+
+#=====================================================exit==================================================================
+Part: CLEAN
+{
+	invoke common UNCUE
+	invoke common UNTAKE
+	
+	invoke $0 UNTAKE_STANDALONE
+	invoke $0 STOP1
+	invoke $0 CTLGetData(baltasar\\initialMode)
+}
+
+Part: EXIT
+{
+	invoke $0 UNTAKE_STANDALONE
+	invoke choose init
+}

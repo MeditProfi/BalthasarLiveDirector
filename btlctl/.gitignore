@@ -1,0 +1,10 @@
+.*.swp
+.*.swo
+.DS_Store
+*.orig
+*.bak
+.sass-cache*
+*.log
+*.lock
+*.pag
+*.dir

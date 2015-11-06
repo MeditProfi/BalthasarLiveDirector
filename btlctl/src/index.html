@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" href="app/css/app.css" />
+  <title>BalthasarLIVE Control</title>
+  <script type="text/javascript" src="app/lib/require.js" data-main="app/require.config.js?v=1.0.3"></script>
+</head>
+<body>
+<div id="loading" data-bind="visible: !inited"><div><div>Loading...</div></div></div>
+<div id="header">
+<div id="inputs"></div>
+<div id="serverStatusNode"></div>
+</div>
+<div class="vspace"></div>
+<div id="serverControlNode"></div>
+<div id="versionInfo"><span data-bind="text: versionInfo"></span></div>
+<!-- templates -->
+<script id="tmplServerStatusNode" type="text/x-jsrender">
+	<div id="serverStatusContainer" data-bind="foreach: servers">
+		<div id="server1_status" class="serverStatus">
+			<div class="baltasarStatus" data-bind="attr: { focused: focused }">
+				<span class="name" data-bind="text: name">BalthasarLIVE</span>
+				<div class="inputs">
+					{{for UI.inputs tmpl="#tmplServerStatusNodeInput" /}}
+					<div class="status" data-bind="css: serverStatus.class, text: serverStatus.text"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</script>
+
+<script id="tmplServerCtlNode" type="text/x-jsrender">
+	<div id="serverControl" data-bind="foreach: servers">
+	  <div class="serverControl">
+	    <div class="baltasarControl" data-bind="attr: { focused: focused }">
+	      <div class="TemplateChooseScreen" data-bind="visible: TemplateChooseScreenActive">
+	      	<div class="templates"  data-bind="foreach: templates">
+	      		<div class="template"><div><img data-bind="attr: { src: img_src, title: name }"></div><div><span data-bind="text: desc"></span></div></div>
+	      	</div>
+	      	<div class="footer">Выбор шаблона</div>
+	      </div><div class="TemplateControlScreen" data-bind="visible: TemplateControlScreenActive">
+	      	<div class="content" data-bind="style: currentTemplateBackgroundLayerStyle">
+	          <h1 data-bind="text: currentTemplateDescription"></h1>
+	      	  {{for UI.inputs tmpl="#tmplServerCtlNodeTemplateInputPreview" /}}
+	      	</div><div class="right">
+	      	{{for UI.rightActions tmpl="#tmplServerCtlNodeActionButton" /}}
+	      	</div>
+	      	<div class="bottom">
+	      	{{for UI.bottomActions tmpl="#tmplServerCtlNodeBottomActionButton" /}}
+	      	</div>
+	      	<div class="exit">
+	      	{{for UI.exitActions tmpl="#tmplServerCtlNodeActionButton" /}}</div>
+	      </div><div class="TemplateOfflineScreen" data-bind="visible: TemplateOfflineScreenActive">
+	        <div></div><h1>OFFLINE</h1>
+	      </div>
+    	</div>
+  	  </div>
+	</div>
+</script>
+
+<script id="tmplServerCtlNodeTemplateInputPreview" type="text/x-jsrender">
+	<div class="input {{:name}}" id="{{:id}}" data-bind="style: status.INPUT.{{:id}}.geometry">
+		<div class="name" data-bind="text: status.INPUT.{{:id}}.name"></div>
+	</div>
+	<div id="CTL{{:id}}" class="key" data-bind="style: status.INPUT.{{:id}}.ctl_position, css: status.INPUT.{{:id}}.ctl_active">{{:key}}</div>
+</script>
+<script id="tmplServerStatusNodeInput" type="text/x-jsrender">
+	<div id="{{:id}}" class="input"><span class="name"></span><span class="channel"></span><span class="shortcut"></span></div>
+</script>
+
+<script id="tmplServerCtlNodeBottomActionButton" type="text/x-jsrender">
+<div class="action block" id="{{:id}}" data-bind="visible: activeTemplateButtons()[{{:key}}], attr: { active: activeTemplateActions[{{:key}}]() }"><div style="width: 0%; height: 60%; float: left;"><div class="action_name">{{:name}}</div></div><div style="width: 100%; height: 60%; float: left;"><div class="action_pict"><img width="72" height="40" data-bind="attr: { src: ctrl_images['ctl{{:key}}'] }"/></div></div><div style="width: 30%; height: 40%; float: left;"><div class="action_name"></div></div><div style="width: 70%; height: 40%; float: left;"><div class="action_key">{{:key}}</div></div><div class="loading" data-bind="visible: templateControlLoading['{{:id}}']"><img src="app/img/circledots_32.gif"/></div></div><div class="action block spacer" data-bind="visible: !activeTemplateButtons()[{{:key}}]"></div>
+</script>
+<script id="tmplServerCtlNodeActionButton" type="text/x-jsrender">
+<div class="action block" id="{{:id}}" data-bind="attr: { active: templateControlActive['{{:id}}'] }"><div style="width: 40%; height: 60%; float: left;"><div class="action_name">{{:name}}</div></div><div style="width: 60%; height: 60%; float: left;"><div class="action_pict"><img src="{{:img}}" width="40" height="40"/></div></div><div style="width: 30%; height: 40%; float: left;"><div class="action_name"></div></div><div style="width: 70%; height: 40%; float: left;"><div class="action_key">{{:key}}</div></div><div class="loading" data-bind="visible: templateControlLoading['{{:id}}']"><img src="app/img/circledots_32.gif"/></div></div>
+</script>
+
+<script id="tmplAvailableInputsNode" type="text/x-jsrender">
+	<channels class="inactive">
+		<gray data-bind="foreach: channels.channelsList.gray">
+				<channel class="button" data-bind="attr: { shortcut: key, active: active }"><inner><circle><p data-bind="text: key"></p></circle></inner></channel>
+		</gray><br/>
+		<orange data-bind="foreach: channels.channelsList.orange">
+				<channel class="button" data-bind="attr: { shortcut: key, active: active }"><inner><circle><p data-bind="text: key"></p></circle></inner></channel>
+		</orange><green data-bind="foreach: channels.channelsList.green">
+				<channel class="button" data-bind="attr: { shortcut: key, active: active }"><inner><circle><p data-bind="text: key"></p></circle></inner></channel>
+		</green>
+	</channels>
+</script>
+
+</body>
+</html>

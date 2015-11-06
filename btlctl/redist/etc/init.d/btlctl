@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+#
+# btlctl        This is the init script for starting up the BalthasarLIVEctl
+#               server daemon (btlctl).
+#
+# chkconfig: - 64 36
+# description: BalthasarLIVEctl daemon Service
+# processname: btlctl 
+#USER=nginx
+bindir=/usr/local/btlctl
+logdir=/var/log/btlctl
+piddir=/usr/local/btlctl
+PRODUCT="BalthasarLIVEctl"
+#
+retval=0
+daemon=${bindir}/btlctl
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+check() {
+        # Check that we're a privileged user
+        [ `id -u` = 0 ] || exit 4
+
+        # Check if starter is executable
+        [ -x $starter ] || exit 5
+}
+
+start_daemon() {
+	check
+	if ! status $daemon > /dev/null; then
+		echo -n "Starting ${PRODUCT} (btlctl)"
+		${daemon}
+		retval=$?
+	else
+		retval=1
+		failure
+	fi
+	echo
+	touch /var/lock/subsys/btlctl
+	return $retval
+}
+
+stop_daemon() {
+	check
+	echo -n "Shutting down ${PRODUCT} (btlctl)"
+
+	for PIDFILE in $piddir/*.pid; do
+        pid=$(cat $PIDFILE)
+        kill $pid
+        unlink $PIDFILE
+	done
+	retval=$?
+	sleep 1  # needed for SAM integration
+	rm -f /var/lock/subsys/btlctl
+	return $retval
+}
+
+status_daemon() {
+	echo -n "Checking for ${PRODUCT} (btlctl): "
+	status $daemon
+}
+
+case "$1" in
+	start)
+		start_daemon
+	;;
+	stop)
+		stop_daemon
+	;;
+	restart)
+		stop_daemon
+		start_daemon
+	;;
+	status)
+		status_daemon
+	;;
+	*)
+		echo "Usage: $0 {start|stop|restart|status}"
+		exit 1
+	;;
+esac

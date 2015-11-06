@@ -1,0 +1,107 @@
+#
+# This file is part of VIDI Playout BalthasarLive Director.
+#
+# VIDI Playout BalthasarLive Director is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# VIDI Playout BalthasarLive Director is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# VIDI Playout BalthasarLive Director. If not, see <http://www.gnu.org/licenses/>.
+#
+Part: SetEmpty
+{
+	data remove_all baltasar
+}
+
+Part: SetTemplate
+{
+	data store baltasar\\template "$2"
+}
+
+Part: SetAction
+{
+	data store baltasar\\action "$2"
+}
+
+Part: SetTotalActions
+{
+	data store baltasar\\totalactions "$2"
+}
+
+Part: SetCurrentInput
+{
+	data store baltasar\\currentinput "$2"
+}
+
+Part: SetInput
+{
+	data store baltasar\\input\\input$2\\url "$3"
+	data store baltasar\\input\\input$2\\name "$4"
+	data store baltasar\\input\\input$2\\key "$5"
+}
+
+Part: SetInputUrl
+{
+	data store baltasar\\input\\input$2\\url "$3"
+}
+
+Part: SetInputGeometry
+{
+	data store baltasar\\input\\input$2\\geometry "$3"
+}
+
+Part: SetInputStyle
+{
+	data store baltasar\\input\\input$2\\style "$3"
+}
+
+Part: SetInputVisible
+{
+	data store baltasar\\input\\input$2\\visible "$3"
+}
+
+Part: SetTextGeometry
+{
+	data store baltasar\\texttags\\$2\\geometry "$3"
+}
+
+Part: SetTextVisible
+{
+	data store baltasar\\texttags\\$2\\visible "$3"
+}
+
+Part: SetTextValue
+{
+	data store baltasar\\texttags\\$2\\text "$3"
+}
+
+Part: SetTextMaxLength
+{
+	data store baltasar\\texttags\\$2\\maxlength "$3"
+}
+
+Part: setOnAir
+{
+	data store baltasar\\onAir "$2"
+}
+
+Part: SetKeyStyle
+{
+	data store baltasar\\keyStyle "$2"
+}
+
+Part: setInitialMode
+{
+	data store baltasar\\initialMode "$2"
+}
+
+Part: setNeedDelay
+{
+	data store baltasar\\needDelay "$2"
+}

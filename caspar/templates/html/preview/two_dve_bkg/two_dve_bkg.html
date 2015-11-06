@@ -1,0 +1,36 @@
+﻿<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<link rel="stylesheet" href="../common.css" />
+	<link rel="stylesheet" href="../layout.css" />
+	<link rel="stylesheet" href="../actions.css" />
+	<link rel="stylesheet" href="../choose.css" />
+</head>
+
+<body>	
+	<div class="content_box block" id="content_box"></div>
+	<div class="down_box block" id="down_box"></div>
+	<div class="right_box block" id="right_box"></div>
+	<div class="corner_box block" id="corner_box"></div>
+
+	<script type="text/javascript" src="../interactive.js"> </script>
+	<script>
+		addButton("right_box", "right_action block", "CLEAN", "CLEAN", "", "../clean.png", "backspace");
+		addButton("right_box", "right_action block", "CUE", "CUE", "", "../cue.png", "F4");
+		addButton("right_box", "right_action block", "TAKE", "TAKE", "", "../take.png", "пробел");
+		
+		addButton("corner_box", "corner_action block", "EXIT", "ВЫХОД", "", "../exit.png", "ESC");
+	
+		addButton("down_box", "down_action block", "CTL1", "", "", "F1.png", "1");
+		addButton("down_box", "down_action block", "CTL2", "", "", "F2.png", "2");
+		addButton("down_box", "down_action block", "CTL3", "", "", "F3.png", "3");
+		addButton("down_box", "down_action block", "CTL4", "", "", "F4.png", "4");
+		addButton("down_box", "down_action block", "CTL5", "", "", "F5.png", "5");
+		// addButtonDummy("down_box", "down_action dummy", "", "", "", "", "");
+		addButton("down_box", "down_action_wide block", "SWITCH", "A<>B", "", "../switch.png", "6");	
+		
+		addInputTag("content_box", "input_tag block", "INP1","B");
+		addInputTag("content_box", "input_tag block", "INP2","N");
+	</script>
+</body>
+</html>

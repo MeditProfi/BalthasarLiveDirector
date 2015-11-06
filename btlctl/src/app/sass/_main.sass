@@ -1,0 +1,103 @@
+html, body
+  width: 100%
+  height: 100%
+  margin: 0
+  padding: 0
+  background-color: white
+
+  background-image: linear-gradient(rgba(255, 255, 255, 0.5) 2px, transparent 2px), linear-gradient(90deg, rgba(255, 255, 255, 0.5) 2px, transparent 2px), linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px), linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px)
+  background-size: 100px 100px, 100px 100px, 50px 50px, 50px 50px, 10px 10px, 10px 10px
+  background-position: -22px -22px, -22px -22px, -71px -71px, -71px -71px, -21px -21px, -21px -21px
+
+body
+  font-size: 10pt
+  font-family: $font-family-main
+  overflow-y: hidden
+  -khtml-user-select: none
+  -webkit-user-select: none
+  user-select: none
+  background-color: #ccc
+  width: 1920px
+  height: 1080px
+
+/* default box-sizing */
+div, table, td, input, select, body, img
+  box-sizing: border-box
+  -moz-box-sizing: border-box
+  -webkit-box-sizing: border-box
+
+a:focus, input:focus, a:active, input:active
+  outline: none
+
+/* allow select text inside draggable elements */
+[draggable=true] 
+  -khtml-user-drag: element
+  -webkit-user-drag: element
+  -khtml-user-select: initial
+  -webkit-user-select: initial
+  user-select: initial
+
+img
+  draggable: false
+
+*:focus  
+  outline: none
+
+frameset
+  margin: 0 0 0 0
+  padding: 0 0 0 0
+
+frame
+  margin: 0 0 0 0
+  padding: 0 0 0 0
+
+form
+  border: 0px
+  padding: 0px
+  margin: 0px
+
+button
+  border: 1px solid #d3dade
+  font-family: 'PT Sans', sans-serif
+  font-weight: normal
+  font-size: 12px
+  margin: 4px 0px 4px 3px
+  background-color: #edf1f6
+  color: #525d82
+  cursor: pointer
+  position: relative
+  z-index: 1
+  border-radius: 5px
+
+button:focus
+  margin: 3px 0px 3px 3px
+
+button[disabled]
+  color: #d3dade
+
+button.selected
+  background-color: white
+  cursor: default
+
+button.selecting
+  background-color: dimgray
+  cursor: wait
+
+input.submit
+  margin: 0 0 0 0
+  background-color: silver
+  cursor: pointer
+  height: 22px
+  font-family: $font-family-main
+  font-weight: normal
+  border: groove 2px
+  border: 1px solid white
+  margin-bottom: 2px
+
+div
+  // font-size: 10pt
+  // font-size: 16px
+  font-family: $font-family-main
+
+div.control
+  cursor: pointer

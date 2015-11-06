@@ -1,0 +1,39 @@
+{
+  "Baltasar" : {
+    "StreamsInfoAddr": "/btlctl/stat",
+    "DefaultRTMPPort": "1935",
+    "source_key_map": {
+      "1":  "G",
+      "2":  "H",
+      "3":  "J",
+      "4":  "K",
+      "5":  "L",
+      "6":  ";",
+      "7":  "'",
+      "8":  "\\",
+      "9":  "A",
+      "10": "S",
+      "11": "D",
+      "12": "F",
+      "13": "Q",
+      "14": "W",
+      "15": "E",
+      "16": "R",
+      "17": "T",
+      "18": "Y",
+      "19": "U",
+      "20": "I",
+      "21": "O",
+      "22": "P",
+      "23": "[",
+      "24": "]"
+    },
+    "sources_update_interval": 3000,
+    "channels_update_interval": 1000,
+  	"rtmp_params_map": {
+      "camtransspb" : "buff_time_enough 500 buff_time_max 1000",
+      "liveuspb" : 	"buff_time_enough 500 buff_time_max 700 fps 25 sync_frames 3 VIDEO_DUP DONT_CLICK"
+    },
+    "rtmp_params_default": "buff_time_enough 500 buff_time_max 700 fps 25 sync_frames 3 VIDEO_DUP DONT_CLICK"
+  }
+}

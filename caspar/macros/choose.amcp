@@ -1,0 +1,51 @@
+#
+# This file is part of VIDI Playout BalthasarLive Director.
+#
+# VIDI Playout BalthasarLive Director is free software: you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation, either version 3 of the License,
+# or (at your option) any later version.
+#
+# VIDI Playout BalthasarLive Director is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# VIDI Playout BalthasarLive Director. If not, see <http://www.gnu.org/licenses/>.
+#
+Part: INIT
+{
+	invoke common setTemplate $0
+	invoke common setTotalActions 6
+}
+
+Part: CTL1
+{
+	invoke one_dve_bkg init 2
+}
+
+Part: CTL2
+{
+	invoke one_dve_bkg init 2
+}
+
+Part: CTL3
+{
+	invoke two_dve_same_size_sdi init 1
+}
+
+Part: CTL4
+{
+	invoke two_dve_sdi init 1
+}
+
+Part: CTL5
+{
+	invoke two_dve_same_size init 1
+}
+
+Part: CTL6
+{
+	invoke two_dve_bkg init 1
+}

@@ -1,0 +1,86 @@
+{
+  "global":{
+    "loglevel"   :  "debug",
+    "logfilename":  "./btlctl.log"
+  },
+  "hermes":{
+      "host": "127.0.0.1",
+      "port": 80,
+      "commands": {
+          "ON_NEEDDELAY_ON"   : "SETSOUND_ON",
+          "ON_NEEDDELAY_OFF"  : "SETSOUND_OFF",
+          "ON_WINDOWS_ON"     : "WINDOWS_ON",
+          "ON_WINDOWS_OFF"    : "WINDOWS_ON",
+          "ON_WINDOWS_UPDATE1": "WINDOWS_UPDATE1",
+          "ON_WINDOWS_UPDATE2": "WINDOWS_UPDATE2",
+          "ON_WINDOWS_UPDATE3": "WINDOWS_OFF"
+      },
+      "rules": [
+        { "from":[ "1" ],           "to":[ "3", "4", "5" ], "do": "ON_WINDOWS_UPDATE3" },
+        { "from":[ "3", "4", "5" ], "to":[ "1" ],           "do": "ON_WINDOWS_UPDATE3" },
+        { "from":[ "3", "4", "5" ], "to":[ "2" ],           "do": "ON_WINDOWS_UPDATE1" },
+        { "from":[ "2" ],           "to":[ "3", "4", "5" ], "do": "ON_WINDOWS_UPDATE2" }
+      ]
+  },
+  "switch_delay":{
+    "transit":{
+      "from_upper": 400,
+      "from_lower": 440
+    },
+    "cut": {
+      "superposition_forbidden": {
+        "untake"   : 250,
+        "take"     : 500
+      },
+      "empty_forbidden": {
+        "from_upper_take"  : 0,
+        "from_upper_untake": 500,
+        "from_lower_take"  : 500,
+        "from_lower_untake": 1000
+      }
+    }
+  },
+
+  "template_engines":[
+    {
+      "name"       : "BalthasarLIVE 1",
+      "host"       :  "10.0.0.10",
+      "port"       : "5250",
+      "tout"       :  "6.0",
+      "loglevel"   :  "debug",
+      "logfilename":  "./btlctl_1.log",
+      "id"         :  "balthasar1",
+      "group"      :  1,
+      "z_index"    :  1,
+      "pid_file"   :  "/var/run/balthasar1.pid",
+      "socket_path":  "/var/run/balthasar1.sock"
+    },
+    {
+      "name"       :  "BalthasarLIVE 2",
+      "host"       :  "10.0.0.10",
+      "port"       :  "5260",
+      "tout"       :  "6.0",
+      "loglevel"   :  "info",
+      "logfilename":  "./btlctl_2.log",
+      "id"         :  "balthasar2",
+      "group"      :  1,
+      "z_index"    :  2,
+      "pid_file"   :  "/var/run/balthasar2.pid",
+      "socket_path":  "/var/run/balthasar2.sock"
+    }
+  ],
+  "fill_engines":[
+    {
+      "name"       :  "BalthasarLIVE Fill",
+      "host"       :  "10.0.0.10",
+      "port"       :  "5270",
+      "tout"       :  "6.0",
+      "loglevel"   :  "info",
+      "logfilename":  "./btlctl_fill.log",
+      "id"         :  "balthasar_fill",
+      "channels"   :  2,
+      "pid_file"   :  "/var/run/balthasar_fill.pid",
+      "socket_path":  "/var/run/balthasar_fill.sock"
+    }
+  ]
+}

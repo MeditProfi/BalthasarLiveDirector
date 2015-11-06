@@ -1,0 +1,179 @@
+API исполнительного устройства BalthasarLIVE 
+версия 0.3
+
+Связь с исполнительным устройством - по telnet. Стандартный порт - 5250
+
+
+1. Получить текущее состояние
+    DATA RETRIEVE_ALL baltasar\r\n
+    
+    Ответ в случае успешного выполнения :
+   201 DATA RETRIEVE_ALL OK\r\n
+    <?xml version="1.0" encoding="utf-8"?>
+    <data>
+        <TEMPLATE>template_name</TEMPLATE>
+        <ACTION>[1-6]</ACTION>
+        
+        <INPUT>
+            <INPUT1>
+                <GEOMETRY>x.xxx x.xxx x.xxx x.xxx</GEOMETRY>
+                <URL>rtmp://...</URL>
+            </INPUT1>
+            
+            <INPUT2>
+                <GEOMETRY>x.xxx x.xxx x.xxx x.xxx</GEOMETRY>
+                <URL>rtmp://...</URL>
+            </INPUT2>    
+            
+            ...etc...
+            
+        </INPUT>
+        
+        <TEXTTAGS>
+            <some_text_name>
+                <GEOMETRY>x.xxx x.xxx x.xxx x.xxx</GEOMETRY>
+                <VISIBLE>[true|false]</VISIBLE>
+                <TEXT>text value</TEXT>
+                <MAXLENGTH>...</MAXLENGTH>
+            </some_text_name>
+            
+            <another_text_name>
+                <GEOMETRY>x.xxx x.xxx x.xxx x.xxx</GEOMETRY>
+                <VISIBLE>[true|false]</VISIBLE>
+                <TEXT>text value</TEXT>
+                <MAXLENGTH>...</MAXLENGTH>
+            </another_text_name>
+            
+            ...etc...
+            
+        </TEXTTAGS>
+    </data>\r\n
+
+TEMPLATE - строковый идентификатор текущего шаблона (латиницей без пробелов). Если не выбран текущий шаблон, этот параметр будет "choose"
+
+ACTION - текущий режим шаблона, который устанавливается кнопками F1-F6 (если в шаблоне нет разных режимов, этот параметр будет 1 по умолчанию). При старте шаблона, по умолчанию может быть не только 1 - в зависимости от шаблона
+
+В разделе INPUT - данные по каждому входному потоку данного шаблона
+            -GEOMETRY - x,y,width,height данного 
+потока на preview BaltasarLive, задаётся в  долях
+ [0..1]. 
+Значения могут иметь разное количество знаков 
+после запятой. 
+
+            -URL - адрес потока, который играется в данный момент. 
+Если поток не играется URL=none
+    
+В разделе TEXTTAGS - данные по текущему состоянию текстовых подписей
+            -Имена xml child-элементов - идентификатор текстовой 
+метки, с которым нужно работать в командах изменения 
+текста. Для каждого шаблона свой набор меток.
+
+            -Параметр MAXLENGTH зависит от шаблона и является
+ постоянным для данного шаблона и данной текстовой метки
+    
+    
+    
+    *XML элементы могут располагаться в другом порядке
+    
+
+
+2. Получить текущее preview изображение
+GETIMAGE 3 960 540\r\n
+    Ответ в случае успешного выполнения:
+201 GETIMAGE OK\r\n
+    <файл png, закодированный в base64>\r\n
+
+*960 540 - это размер изображения. Меньше лучше не делать, т.к. при меньшем изображении теряется качество.
+
+
+3. Получить список установленных шаблонов
+        DATA RETRIEVE templates_list\r\n
+
+    Ответ в случае успешного выполнения:
+       201 DATA RETRIEVE OK\r\n
+        <?xml version="1.0" encoding="utf-8"?>
+<templates>
+    <template>
+        <id>template_name</id>
+        <desc>Краткое описание шаблона на русском</desc>
+    </template>
+    
+    <template>
+        etc...
+    </template> 
+
+etc...
+  </templates>\r\n
+
+
+4. Получить thumbnail схематичное изображение для шаблона
+THUMBNAIL RETRIEVE thumbs/<template_name>\r\n
+    Ответ в случае успешного выполнения:
+201 THUMBNAIL RETRIEVE OK\r\n
+        <файл png, закодированный в base64>\r\n
+
+
+5. Инициализировать шаблон
+    MACRO <template_name> init\r\n
+    Ответ в случае успешного выполнения:
+    202 MACRO OK\r\n
+
+    При выходе в режим выбора шаблона:
+    MACRO choose init\r\n
+
+
+6. Выполнить команду переключения F1-F6 для текущего шаблона
+    MACRO <template_name> ctl<N>\r\n
+    где N - [1..6] - номер команды
+    Ответ в случае успешного выполнения:
+    202 MACRO OK\r\n    
+
+
+
+7. Начать воспроизведение live-потока на заданной части шаблона
+    MACRO <template_name> INPUT<N> "<url>"\r\n
+    N - номер части шаблона
+    url - rtmp://... (если в кавычках, можно с пробелами)
+    Ответ в случае успешного выполнения:
+    202 MACRO OK\r\n
+
+
+
+
+
+8. Остановить воспроизведение live-потока на заданной части шаблона
+    MACRO <template_name> STOP<N>\r\n
+    Ответ в случае успешного выполнения:
+    202 MACRO OK\r\n
+    
+    
+    
+9. Остановить воспроизведение всех live-потоков (эта операция также отменяет CUE)
+    MACRO <template_name> CLEAN\r\n
+    Ответ в случае успешного выполнения:
+    202 MACRO OK\r\n
+
+
+10.  Передать событие CUE / Отменить CUE
+    MACRO common [cue|uncue]\r\n
+    Ответ в случае успешного выполнения:
+    202 MACRO OK\r\n
+    
+    
+11.  Передать событие TAKE / Отменить TAKE 
+    MACRO common [take|untake]\r\n
+    Ответ в случае успешного выполнения:
+    202 MACRO OK\r\n
+    
+    
+12. Show/hide надписи
+    MACRO common [showtext|hidetext] <text_name>\r\n
+    Ответ в случае успешного выполнения:
+    202 MACRO OK\r\n     
+
+
+13. Установить текст надписи
+    MACRO common settext <text_name> "<text_value>"\r\n
+    Ответ в случае успешного выполнения:
+    202 MACRO OK\r\n
+

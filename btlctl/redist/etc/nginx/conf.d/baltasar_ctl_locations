@@ -1,0 +1,13 @@
+    location /btlctl {
+        alias /var/www/btlctl;
+        charset utf-8;
+        charset_types text/xml text/plain text/vnd.wap.wml application/x-javascript application/rss+xml text/css;
+    }
+    location /btlctl/btlctl.fpl
+    {
+        fastcgi_pass   unix:/var/run/mod_fcgid/btlctl-fcgi.sock;
+        fastcgi_index  btlctl.fpl;
+        fastcgi_param  SCRIPT_FILENAME /btlctl/btlctl.fpl;
+        fastcgi_param  X-Real-IP $http_x_real_ip;
+        include        fastcgi_params;
+    }
