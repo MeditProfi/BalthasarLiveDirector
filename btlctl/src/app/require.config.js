@@ -27,6 +27,7 @@ requirejs.config({
         'viewmodel/baltasar': 'viewmodel/baltasar',
         'json'              : 'lib/json',
         'text'              : 'lib/text',
+        'xml'               : 'lib/xml',
         'keycodes'          : 'lib/keycodes',
         // 'purl'              : 'lib/purl',
         'server_driver'     : 'server_driver',
