@@ -97,7 +97,8 @@ Part: INIT
 	play MixSDIBkg route://SrcInput3
 	play MixInput2 route://SrcInput2
 	play MixBorder2 route://SrcBorder
-	
+
+
 	mixer MixBkg volume 0
 	mixer MixSDIBkg volume 0
 	mixer MixInput1 volume 0
@@ -149,7 +150,7 @@ Part: StopSeparatePreview
 	clear PrvLoading2
 	clear PrvInput2
 	clear PrvBorder2
-	
+
 	mixer PrvCommon fill 0 0 0.8 0.8
 	play PrvCommon route://1
 }
@@ -163,41 +164,44 @@ Part: CTL1
 	if ($2 == 1) invoke $0 TRANSIT_BEGIN else
 	
 	invoke data SetKeyStyle "closed"
-	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 0 else
-	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
-	mixer PrvBkg opacity 1
-	mixer PrvSDIBkg opacity 0
 
-	invoke data SetInputGeometry 1 "0.0625 0.3089 0.2300 0.2259"
-	invoke data SetInputVisible 1 "1"
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
+
 	mixer MixInput1  fill 0.0781 0.3861 0.2875 0.2824
 	mixer MixBorder1 fill 0.0755 0.3821 0.2927 0.2904
+	mixer MixInput2  fill 0.3870 0.1389 0.5344 0.5296
+	mixer MixBorder2 fill 0.3844 0.1349 0.5396 0.5376
+
+	mixer MixSDIBkg  fill 0.0 0.0 1.0 1.0
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 0 else
+
+	invoke data SetInputVisible 1 "1"
+	invoke data SetInputVisible 2 "1"
+	invoke data SetInputVisible 3 "0"
+
+	mixer PrvBkg opacity 1
 
 	mixer PrvDummy1   fill 0.0625 0.3089 0.2300 0.2259
 	mixer PrvLoading1 fill 0.0625 0.3089 0.2300 0.2259
 	mixer PrvInput1   fill 0.0625 0.3089 0.2300 0.2259
 	mixer PrvBorder1  fill 0.0604 0.3057 0.2342 0.2323
-	invoke common setInputTagPos 1 0.0625 0.3089
-
-
-
-	invoke data SetInputGeometry 2 "0.3096 0.1111 0.4275 0.4237"
-	invoke data SetInputVisible 2 "1"
-	mixer MixInput2  fill 0.3870 0.1389 0.5344 0.5296
-	mixer MixBorder2 fill 0.3844 0.1349 0.5396 0.5376
 
 	mixer PrvDummy2   fill 0.3096 0.1111 0.4275 0.4237
 	mixer PrvLoading2 fill 0.3096 0.1111 0.4275 0.4237
 	mixer PrvInput2   fill 0.3096 0.1111 0.4275 0.4237
 	mixer PrvBorder2  fill 0.3075 0.1079 0.4317 0.4301
-	invoke common setInputTagPos 2 0.3096 0.1111
-	
-	invoke data SetInputGeometry 3 "0.0 0.0 0.8 0.8"
-	invoke data SetInputVisible 3 "0"
-	mixer MixSDIBkg  fill 0.0 0.0 1.0 1.0
+
 	mixer PrvSDIBkg  fill 0.0 0.0 0.8 0.8
+	mixer PrvSDIBkg opacity 0
+
+	invoke data SetInputGeometry 1 "0.0625 0.3089 0.2300 0.2259"
+	invoke common setInputTagPos 1 0.0625 0.3089
+	invoke data SetInputGeometry 2 "0.3096 0.1111 0.4275 0.4237"
+	invoke common setInputTagPos 2 0.3096 0.1111
+	invoke data SetInputGeometry 3 "0.0 0.0 0.8 0.8"
 	invoke common setInputTagPos 3 0 0
 
+	
 	if ($2 == 1) invoke $0 TRANSIT_END else
 }
 
@@ -210,10 +214,18 @@ Part: CTL2
 
 	invoke data SetKeyStyle "closed"
 	# if ( GetData(baltasar\\onAir) == taken ) invoke $0 MixOn else
-	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 1 else
 	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
 	mixer PrvBkg opacity 1
+
+
+	invoke data SetInputGeometry 3 "0.0 0.0 0.8 0.8"
+	invoke data SetInputVisible 3 "1"
+	mixer MixSDIBkg  fill 0.0 0.0 1.0 1.0
+	mixer PrvSDIBkg  fill 0.0 0.0 0.8 0.8
+	invoke common setInputTagPos 3 0 0
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 1 else
 	mixer PrvSDIBkg opacity 1
+
 
 	invoke data SetInputGeometry 1 "0 0 0 0"
 	invoke data SetInputVisible 1 "0"
@@ -238,12 +250,6 @@ Part: CTL2
 	mixer PrvBorder2  fill 0.5050 0.4879 0.2346 0.2338
 	invoke common setInputTagPos 2 0.5050 0.4879
 
-	invoke data SetInputGeometry 3 "0.0 0.0 0.8 0.8"
-	invoke data SetInputVisible 3 "1"
-	mixer MixSDIBkg  fill 0.0 0.0 1.0 1.0
-	mixer PrvSDIBkg  fill 0.0 0.0 0.8 0.8
-	invoke common setInputTagPos 3 0 0
-
 
 	if ($2 == 1) invoke $0 TRANSIT_END else
 }
@@ -257,9 +263,7 @@ Part: CTL3
 	
 	invoke data SetKeyStyle "closed"
 	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
-	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 0 else
 	mixer PrvBkg opacity 1
-	mixer PrvSDIBkg opacity 0
 	
 	invoke data SetInputGeometry 1 "0 0 0.8 0.8"
 	invoke data SetInputVisible 1 "1"
@@ -289,6 +293,8 @@ Part: CTL3
 	mixer MixSDIBkg  fill 0.0 0.0 1.0 1.0
 	mixer PrvSDIBkg  fill 0.0 0.0 0.8 0.8
 	invoke common setInputTagPos 3 0 0
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 0 else
+	mixer PrvSDIBkg opacity 0
 
 	
 	if ($2 == 1) invoke $0 TRANSIT_END else
@@ -303,20 +309,7 @@ Part: CTL4
 
 	invoke data SetKeyStyle "closed"
 	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
-	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 0 else
 	mixer PrvBkg opacity 1
-	mixer PrvSDIBkg opacity 0
-
-	invoke data SetInputGeometry 1 "0 0 0 0"
-	invoke data SetInputVisible 1 "0"
-	mixer MixInput1  fill 0 0 0 0
-	mixer MixBorder1 fill 0 0 0 0
-
-	mixer PrvDummy1   fill 0 0 0 0
-	mixer PrvLoading1 fill 0 0 0 0
-	mixer PrvInput1   fill 0 0 0 0
-	mixer PrvBorder1  fill 0 0 0 0
-	invoke common setInputTagPos 1 -1 -1
 
 
 	invoke data SetInputGeometry 2 "0 0 0.8 0.8"
@@ -330,11 +323,26 @@ Part: CTL4
 	mixer PrvBorder2  fill 0 0 0 0
 	invoke common setInputTagPos 2 -1 -1
 
+
+	invoke data SetInputGeometry 1 "0 0 0 0"
+	invoke data SetInputVisible 1 "0"
+	mixer MixInput1  fill 0 0 0 0
+	mixer MixBorder1 fill 0 0 0 0
+
+	mixer PrvDummy1   fill 0 0 0 0
+	mixer PrvLoading1 fill 0 0 0 0
+	mixer PrvInput1   fill 0 0 0 0
+	mixer PrvBorder1  fill 0 0 0 0
+	invoke common setInputTagPos 1 -1 -1
+
+
 	invoke data SetInputGeometry 3 "0.0 0.0 0.8 0.8"
 	invoke data SetInputVisible 3 "0"
 	mixer MixSDIBkg  fill 0.0 0.0 1.0 1.0
 	mixer PrvSDIBkg  fill 0.0 0.0 0.8 0.8
 	invoke common setInputTagPos 3 0 0
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 0 else
+	mixer PrvSDIBkg opacity 0
 
 	if ($2 == 1) invoke $0 TRANSIT_END else
 }
@@ -347,10 +355,17 @@ Part: CTL5
 	if ($2 == 1) invoke $0 TRANSIT_BEGIN else
 
 	invoke data SetKeyStyle "closed"
-	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 1 else
 	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
 	mixer PrvBkg opacity 1
+
+	invoke data SetInputGeometry 3 "0.0 0.0 0.8 0.8"
+	invoke data SetInputVisible 3 "1"
+	mixer MixSDIBkg  fill 0.0 0.0 1.0 1.0
+	mixer PrvSDIBkg  fill 0.0 0.0 0.8 0.8
+	invoke common setInputTagPos 3 0 0
+	if ( GetData(baltasar\\onAir) == taken ) mixer MixSDIBkg opacity 1 else
 	mixer PrvSDIBkg opacity 1
+
 
 	invoke data SetInputGeometry 1 "0 0 0 0"
 	invoke data SetInputVisible 1 "0"
@@ -375,11 +390,6 @@ Part: CTL5
 	mixer PrvBorder2  fill 0 0 0 0
 	invoke common setInputTagPos 2 -1 -1
 
-	invoke data SetInputGeometry 3 "0.0 0.0 0.8 0.8"
-	invoke data SetInputVisible 3 "1"
-	mixer MixSDIBkg  fill 0.0 0.0 1.0 1.0
-	mixer PrvSDIBkg  fill 0.0 0.0 0.8 0.8
-	invoke common setInputTagPos 3 0 0
 
 	if ($2 == 1) invoke $0 TRANSIT_END else
 }
