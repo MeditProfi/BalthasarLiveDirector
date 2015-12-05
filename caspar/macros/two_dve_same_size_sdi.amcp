@@ -466,14 +466,13 @@ Part: DO_TAKE_STANDALONE
 	invoke $0 StopSeparatePreview
 	
 	play MixEnter
-	loadbg MixEnter bkg_enter
 		wait EnterInTout
 			play MixSDIBkg
 			play MixBkg
-			loadbg MixBkg bkg_loop loop
 			invoke $0 MixOn
 		wait EnterOutTout
 	stop MixEnter
+	loadbg MixEnter bkg_enter
 }
 
 Part: CUE_STANDALONE
@@ -490,13 +489,13 @@ Part: UNTAKE_STANDALONE
 Part: DO_UNTAKE_STANDALONE
 {
 	play MixEnter
-	loadbg MixEnter bkg_enter
 		wait EnterInTout	
 			invoke $0 MixOff
 			invoke $0 StopBkg
 			invoke $0 StartSeparatePreview
 		wait EnterOutTout
 	stop MixEnter
+	loadbg MixEnter bkg_enter
 }
 
 Part: SWITCH_AS_UPPER
@@ -600,12 +599,12 @@ Part: StartBkgNoEnter
 {
 	play MixSDIBkg 
 	play MixBkg 
-	loadbg MixBkg bkg_loop loop
 }
 
 Part: StopBkg
 {
 	stop MixBkg
+	loadbg MixBkg bkg_loop loop
 	#stop MixSDIBkg 
 }
 
