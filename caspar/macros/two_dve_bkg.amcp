@@ -145,30 +145,34 @@ Part: CTL1
 	
 	invoke data SetKeyStyle "closed"
 	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
-	mixer PrvBkg opacity 1
 
-	invoke data SetInputGeometry 1 "0.0625 0.3089 0.2300 0.2259"
-	invoke data SetInputVisible 1 "1"
 	mixer MixInput1  fill 0.0781 0.3861 0.2875 0.2824
 	mixer MixBorder1 fill 0.0755 0.3821 0.2927 0.2904
+	mixer MixInput2  fill 0.3870 0.1389 0.5344 0.5296
+	mixer MixBorder2 fill 0.3844 0.1349 0.5396 0.5376
+
+
+	invoke data SetInputVisible 1 "1"
+	invoke data SetInputVisible 2 "1"
+
+
+	mixer PrvBkg opacity 1
 
 	mixer PrvDummy1   fill 0.0625 0.3089 0.2300 0.2259
 	mixer PrvLoading1 fill 0.0625 0.3089 0.2300 0.2259
 	mixer PrvInput1   fill 0.0625 0.3089 0.2300 0.2259
 	mixer PrvBorder1  fill 0.0604 0.3057 0.2342 0.2323
-	invoke common setInputTagPos 1 0.0625 0.3089
-
-
-
-	invoke data SetInputGeometry 2 "0.3096 0.1111 0.4275 0.4237"
-	invoke data SetInputVisible 2 "1"
-	mixer MixInput2  fill 0.3870 0.1389 0.5344 0.5296
-	mixer MixBorder2 fill 0.3844 0.1349 0.5396 0.5376
-
+	
 	mixer PrvDummy2   fill 0.3096 0.1111 0.4275 0.4237
 	mixer PrvLoading2 fill 0.3096 0.1111 0.4275 0.4237
 	mixer PrvInput2   fill 0.3096 0.1111 0.4275 0.4237
 	mixer PrvBorder2  fill 0.3075 0.1079 0.4317 0.4301
+	
+	
+	invoke data SetInputGeometry 1 "0.0625 0.3089 0.2300 0.2259"
+	invoke common setInputTagPos 1 0.0625 0.3089
+	
+	invoke data SetInputGeometry 2 "0.3096 0.1111 0.4275 0.4237"
 	invoke common setInputTagPos 2 0.3096 0.1111
 	
 	if ($2 == 1) invoke $0 TRANSIT_END else
@@ -260,17 +264,6 @@ Part: CTL4
 	if ( GetData(baltasar\\onAir) == taken ) mixer MixBkg opacity 1 else
 	mixer PrvBkg opacity 1
 
-	invoke data SetInputGeometry 1 "0 0 0 0"
-	invoke data SetInputVisible 1 "0"
-	mixer MixInput1  fill 0 0 0 0
-	mixer MixBorder1 fill 0 0 0 0
-
-	mixer PrvDummy1   fill 0 0 0 0
-	mixer PrvLoading1 fill 0 0 0 0
-	mixer PrvInput1   fill 0 0 0 0
-	mixer PrvBorder1  fill 0 0 0 0
-	invoke common setInputTagPos 1 -1 -1
-
 
 	invoke data SetInputGeometry 2 "0 0 0.8 0.8"
 	invoke data SetInputVisible 2 "1"
@@ -282,6 +275,19 @@ Part: CTL4
 	mixer PrvInput2   fill 0 0 0.8 0.8	
 	mixer PrvBorder2  fill 0 0 0 0
 	invoke common setInputTagPos 2 -1 -1
+
+
+
+	invoke data SetInputGeometry 1 "0 0 0 0"
+	invoke data SetInputVisible 1 "0"
+	mixer MixInput1  fill 0 0 0 0
+	mixer MixBorder1 fill 0 0 0 0
+
+	mixer PrvDummy1   fill 0 0 0 0
+	mixer PrvLoading1 fill 0 0 0 0
+	mixer PrvInput1   fill 0 0 0 0
+	mixer PrvBorder1  fill 0 0 0 0
+	invoke common setInputTagPos 1 -1 -1
 
 	if ($2 == 1) invoke $0 TRANSIT_END else
 }
