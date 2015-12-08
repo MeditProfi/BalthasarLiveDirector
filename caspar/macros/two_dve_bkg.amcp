@@ -42,10 +42,13 @@ Part: CONST
 	SET PrvBorder2	= 2-9	
 	SET PrvCommon	= 2-19
 	
-	SET TransitInTout		= 600
-	SET TransitOutTout		= 600
-	SET EnterInTout			= 700
-	SET EnterOutTout		= 1500
+	#SET bkg_enter   = bkg_enter1
+	SET transit     = transit_1sec
+
+	SET TransitInTout		= 480
+	SET TransitOutTout		= 2000
+	SET EnterInTout			= 1500
+	SET EnterOutTout		= 3000
 }
 
 Part: INIT
