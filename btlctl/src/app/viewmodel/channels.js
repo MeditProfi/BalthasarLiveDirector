@@ -52,6 +52,7 @@ define('viewmodel/channels',[
 						channel.active( true );
 						if( active.app == "sdi" ) {
 							var decklink = active.name.replace("SDI-", "");
+							decklink = decklink.replace(/@[\w\d]*$/, "");
 							channel.decklink( decklink );
 						}
 						else {
