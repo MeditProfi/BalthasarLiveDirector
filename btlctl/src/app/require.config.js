@@ -25,6 +25,7 @@ requirejs.config({
         'knockout'          : 'lib/knockout-3.3.0',
         'komapping'         : 'lib/knockout.mapping-latest',
         'viewmodel/baltasar': 'viewmodel/baltasar',
+        'viewmodel/channels': 'viewmodel/channels',
         'json'              : 'lib/json',
         'text'              : 'lib/text',
         'xml'               : 'lib/xml',

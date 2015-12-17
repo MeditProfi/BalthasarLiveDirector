@@ -5,11 +5,12 @@ define('viewmodel/baltasar',[
 "server_driver",
 "rtmp_stat_parser",
 "keycodes",
+"viewmodel/channels",
 "json!config.json",
 "json!config.rtmp.json",
 "jsrender",
 "jquery.hotkeys",
-], function($, ko, komapping, serverDriver, rtmp, keyboardMap, config_balthasar, config_rtmp) {
+], function($, ko, komapping, serverDriver, rtmp, keyboardMap, channelsModel, config_balthasar, config_rtmp) {
 	"use strict";
 	var viewModel;
 	ko.mapping = komapping;
@@ -257,7 +258,7 @@ define('viewmodel/baltasar',[
 			                ],
 		};
 
-		this.channels = new Channels( this.serverDriver, config.Baltasar.source_key_map );
+		this.channels = channelsModel.init( this.serverDriver, config.Baltasar.source_key_map, this.rtmp );
 	}
 
 	ViewModel.prototype = {
@@ -567,86 +568,6 @@ define('viewmodel/baltasar',[
 	};
 
 	//streams interface=========================================================================
-    function Channels(driver, source_key_map) {
-		var self = this;
-		this.list = null;
-		this.serverDriver = driver;
-
-		this.channelsList = { green: [], orange: [], gray: [] };
-		for(var key in source_key_map) {
-			var i = parseInt(key);
-			if (i <= 8) //sdi
-				this.channelsList.green.push({  "i": i, "key": source_key_map[key], "active": false, "decklink": 0 });
-			else if ((i >= 9) && (i <= 12)) // pool
-				this.channelsList.orange.push({ "i": i, "key": source_key_map[key], "active": false, "stream": ""  });
-			else 	//live
-				this.channelsList.gray.push({   "i": i, "key": source_key_map[key], "active": false, "stream": ""  });
-		}
-		for( var key in this.channelsList )
-			this.channelsList[key] = ko.mapping.fromJS( this.channelsList[key] );
-    }
-    Channels.prototype = {
-		updateWrapper: function(){
-			if (!this.list) return;
-			var streams = rtmp.getStreams(this.list);
-			for( var app in this.channelsList ) {
-				for( var ch in this.channelsList[app]() ) {
-					var channel = this.channelsList[app]()[ch];
-					var active = null;
-					for( var url in streams ) {
-						if( parseInt(streams[url].slot) != channel.i() ) continue;
-						active = streams[url];
-						break;
-					}
-					if( active ) {
-						// console.log( active.url + " active");
-						channel.active( true );
-						if( active.app == "sdi" ) {
-							var decklink = active.name.replace("SDI-", "");
-							channel.decklink( decklink );
-						}
-						else {
-							channel.stream( active.fullURL );
-						}
-					}
-					else {
-						channel.active( false );
-						channel.stream( "" );
-					}
-				}
-			}
-		},
-		update: function(cb){
-			// console.log("Channels.update()");
-			var self = this;
-			this.serverDriver.getAvailableInputsList( $.proxy(
-				function(data){
-					this.list = data;
-					cb(null, data);
-					self.updateWrapper();
-
-				}, this),
-				function(jxhr, err){
-					cb(500, err);
-				}
-			);
-		},
-		getChannelById: function(id) {
-			var channel = undefined;
-			for( var app in this.channelsList ) {
-				for( var ch in this.channelsList[app]() ) {
-					var chnl = this.channelsList[app]()[ch];
-					if( chnl.i() != id ) continue;
-					channel = chnl;
-					break;
-				}
-				if( channel ) break;
-			}
-			return channel;
-		},
-    };
-
-
 	function parse_GEOMETRY(str){
 		var parts = str.split(" ");
 		if (parts.length != 4) return [ -1.0, -1.0, 0.0, 0.0 ];
