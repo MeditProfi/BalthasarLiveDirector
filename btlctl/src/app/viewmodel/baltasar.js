@@ -224,7 +224,7 @@ define('viewmodel/baltasar',[
 	function ViewModel()
 	{
 		rtmp.init( config );
-		this.version             = "1.0.3";
+		this.version             = "1.0.4";
 		this.rtmp                = rtmp;
 		this.serverDriver 		 = serverDriver;
 		this.inited              = ko.observable(false);

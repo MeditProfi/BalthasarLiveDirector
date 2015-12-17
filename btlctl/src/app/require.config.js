@@ -1,7 +1,7 @@
 requirejs.config({
     waitSeconds: 300
     // , urlArgs: "_ts=" + (new Date()).getTime()
-    , urlArgs: "v=1.0.3"
+    , urlArgs: "v=1.0.4"
     , shim: {
       'baltasar'          : ['jquery', 'json'],
       'jquery.cookie'     : ['jquery'],
