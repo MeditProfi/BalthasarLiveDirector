@@ -39,6 +39,7 @@ define('viewmodel/channels',[
 			if (!this.list) return;
 			var streams = this.rtmp.getStreams(this.list);
 			for( var app in this.channelsList ) {
+				var i = 1;
 				for( var ch in this.channelsList[app]() ) {
 					var channel = this.channelsList[app]()[ch];
 					var active = null;
@@ -61,7 +62,14 @@ define('viewmodel/channels',[
 					}
 					else {
 						channel.active( false );
-						channel.stream( "" );
+						if (channel.stream)
+						 	channel.stream( "" );
+
+						if (channel.decklink) {
+							channel.active( true );
+							channel.decklink( i % 4 );
+							i++;
+						}
 					}
 				}
 			}
