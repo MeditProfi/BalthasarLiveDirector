@@ -1,3 +1,4 @@
+@charset "UTF-8";
 html, body {
   width: 100%;
   height: 100%;
@@ -312,7 +313,9 @@ div.control {
     .baltasarControl .TemplateControlScreen .content h1 {
       text-align: right;
       padding-right: 10px;
-      color: #aaa; }
+      color: #fff;
+      text-shadow: -2px -2px 2px #000, 2px -2px 2px #000, -2px 2px 2px #000, 2px 2px 2px #000;
+      letter-spacing: 1.5px; }
     .baltasarControl .TemplateControlScreen .content .input {
       position: absolute;
       background-color: orange;
