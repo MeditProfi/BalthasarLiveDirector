@@ -692,7 +692,9 @@ sub update_fill_engine {
     my %args = @_;
 
     my $commands = GetUpdateFillEngineCommands(\%CONFIG, \%BTL_STATUS, %args);
-    my $fill_btl      = $BTL_STATUS{ $CONFIG{fill_engines}->[0]->{id} };
+    return q() unless( $commands );
+
+    my $fill_btl = $BTL_STATUS{ $CONFIG{fill_engines}->[0]->{id} };
     for my $cmd ( @$commands ) {
         my $error = send_command( $fill_btl, $cmd );
         $LOG->error(sprintf("BCL1450E %s ERROR: %s", $fill_btl->{id}, $error)) if( $error );

@@ -92,9 +92,9 @@ define("server_driver", [
 						return error_handler(error, handler_argument);
 					}
 				},
-				'success': function(result) { return onload_handler(result, handler_argument); },
-				'error'  : function(error)  { return error_handler(error, handler_argument);   },
-				'abort'  : function(context){ return abort_handler(context, handler_argument); },
+				'success': function(result) { if( typeof onload_handler === 'function' ) return onload_handler(result, handler_argument); },
+				'error'  : function(error)  { if( typeof error_handler === 'function'  ) return error_handler(error, handler_argument);   },
+				'abort'  : function(context){ if( typeof abort_handler === 'function ' ) return abort_handler(context, handler_argument); },
 				'complete' : function(xhr, textStatus) {
 			        if( xhr.status.toString()[0] == '3' ){
 				        top.location.href = xhr.getResponseHeader('Location');
