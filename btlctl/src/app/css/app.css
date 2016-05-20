@@ -500,14 +500,14 @@ channels > gray, channels > orange, channels > green {
   padding: 20px 5px 5px 5px; }
 
 channels > gray:before {
-  content: "ИСТОЧНИКИ ТЖК"; }
+  content: "IP STREAMS"; }
 
 channels > orange {
   background-color: #ffdfa8;
   padding-right: 3px; }
 
 channels > orange:before {
-  content: "ИСТОЧНИКИ POOL"; }
+  content: "SHARED STREAMS"; }
 
 channels > green {
   background-color: #8dd9bf;
@@ -515,7 +515,7 @@ channels > green {
   left: -1px; }
 
 channels > green:before {
-  content: "ИСТОЧНИКИ SDI"; }
+  content: "SDI INPUTS"; }
 
 channel.button > inner p, led > inner p {
   padding: 0px;

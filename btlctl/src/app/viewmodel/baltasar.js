@@ -247,9 +247,9 @@ define('viewmodel/baltasar',[
 			                ],
 			rightActions  : [ { "id": "CLEAR", key: "backspace", name: "clear", img: "app/img/clean.png"},
 			                  { "id": "CUE",   key: "F4",        name: "cue",   img: "app/img/cue.png"},
-			                  { "id": "TAKE",  key: "пробел",    name: "take",  img: "app/img/take.png"},
+			                  { "id": "TAKE",  key: "spacebar",  name: "take",  img: "app/img/take.png"},
 			                ],
-			exitActions   : [ { "id": "EXIT",  key: "ESC",       name: "выход", img: "app/img/exit.png"}],
+			exitActions   : [ { "id": "EXIT",  key: "ESC",       name: "exit",  img: "app/img/exit.png"}],
 			inputs        : [
 			                  { key: "&lt;",      name: "input4", id: "INPUT4", },
 			                  { key: "M",         name: "input3", id: "INPUT3", },
